@@ -1,0 +1,9 @@
+Lineage,Region,Start,End
+B/VIC,120_loop,429,495
+B/VIC,150_loop,504,534
+B/VIC,160_loop,567,594
+B/VIC,190_helix,672,699
+B/YAM,120_loop,429,495
+B/YAM,150_loop,504,534
+B/YAM,160_loop,567,591
+B/YAM,190_helix,669,696

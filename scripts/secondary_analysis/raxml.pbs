@@ -1,0 +1,21 @@
+#!/bin/sh
+#PBS -S /bin/sh
+#PBS -A alauring_fluxm
+#PBS -N raxml
+#PBS -q fluxm
+#PBS -M avalesan@umich.edu
+#PBS -m abe
+#PBS -j oe
+#PBS -V
+#PBS -l nodes=1:ppn=2,mem=295gb,walltime=4:00:00
+
+echo Running job name $PBS_JOBNAME with ID $PBS_JOBID on host $PBS_O_HOST;
+echo Working directory is $PBS_O_WORKDIR
+echo Start time: `date`;
+
+
+cd $PBS_O_WORKDIR
+
+raxmlHPC-SSE3 -f a -x 12345 -p 12345 -N autoMRE -m GTRCAT -s ../fasta_for_fasttree/IBV_coding_aln_PairAnalysis.fa -n IBV_raxml_PairAnalysis.tree
+
+echo Finish time: `date`
