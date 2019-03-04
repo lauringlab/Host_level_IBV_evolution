@@ -6,7 +6,6 @@
 
 library(tidyverse)
 library(magrittr)
-#library(HIVEr)
 
 setwd("/Users/avalesano/Documents/MSTP/LauringLab/Host_level_IBV_evolution/scripts/")
 
@@ -337,13 +336,15 @@ palette = wesanderson::wes_palette("FantasticFox1")
 possible_pairs.dist %>% filter(valid == TRUE | Household == FALSE) %>% select(season, ALV_ID_1, ALV_ID_2, L1_norm, valid, Household) -> L1norm_plot_data
 
 L1norm_plot <- ggplot(L1norm_plot_data, aes(x = L1_norm, fill = as.factor((valid-1)*-1), y = ..ncount..)) +
-  geom_histogram(color = 'white', binwidth = 7.5, boundary = 0, position = 'dodge') +
+  geom_histogram(binwidth = 7.5, boundary = 0, position = 'dodge') +
   scale_fill_manual(name = "", labels = c("Household pair", "Community pair"), values = palette[c(3,4)]) +
   xlab("L1 Norm") + ylab("Normalized Count") +
   theme(legend.position = c(0.5, 0.5)) +
-  geom_segment(aes(x = cutoff, xend = cutoff, y = 0, yend = 1), linetype = 2, color = palette[5], size = 0.3)
+  geom_segment(aes(x = cutoff, xend = cutoff, y = 0, yend = 1), linetype = 2, color = palette[5], size = 0.3) + theme_classic()
 
 L1norm_plot
+
+ggsave(plot = L1norm_plot, filename = "../results/plots/L1norm.jpg", device = "jpeg")
 
 # ============================== Number of SNVs per transmission pair sample ===================================
 

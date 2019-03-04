@@ -6,9 +6,8 @@
 
 setwd("/Users/avalesano/Documents/MSTP/LauringLab/Host_level_IBV_evolution/scripts/")
 
-require(tidyverse)
-require(magrittr)
-require(HIVEr)
+library(tidyverse)
+library(magrittr)
 library(wesanderson)
 library(ggbeeswarm)
 palette <- wesanderson::wes_palette("FantasticFox1")
@@ -27,12 +26,12 @@ nocut_isnv <- filter(no_freq_cut, freq.var < 0.98) # 8693 variants
 std_isnv <- filter(qual, freq.var < 0.98) # 136 variants
 
 ggplot(std_isnv, aes(freq.var)) + geom_histogram(binwidth = 0.01)
-ggplot(nocut_isnv, aes(freq.var)) + geom_histogram(binwidth = 0.0001) + xlim(0, 0.02) # Mostly with very low frequencies, even though seen in both samples. Almost all below 0.5%.
+ggplot(nocut_isnv, aes(freq.var)) + geom_histogram(binwidth = 0.0001) + xlim(0, 0.02) + geom_vline(xintercept = 0.02, linetype = "dotted", color = "black", size = 1) # Mostly with very low frequencies, even though seen in both samples. Almost all below 0.5%.
 
 # =========== Histogram of iSNV counts per sample ================
 
-titer.plot <- ggplot(meta, aes(x=as.factor(DPSO), y=genome_copy_per_ul)) + geom_boxplot(notch = FALSE) + ylab(expression(paste(Genomes,"/" ,mu,L))) + scale_y_log10() + xlab("Days Post Symptom Onset")
-
+titer.plot <- ggplot(meta, aes(x=as.factor(DPSO), y=genome_copy_per_ul)) + geom_boxplot(notch = FALSE) + ylab(expression(paste(Genomes,"/" ,mu,L))) + scale_y_log10() + xlab("Days Post Symptom Onset") + theme_bw()
+ggsave(plot = titer.plot, filename = "../results/plots/TiterByDPSO.jpg", device = "jpeg")
 
 # =========== iSNV by DPSO ================
 
@@ -49,22 +48,23 @@ snv_qual_meta.o$HA_iSNV[is.na(snv_qual_meta.o$HA_iSNV)] <- 0
 
 write_csv(snv_qual_meta.o, "../data/processed/snv_qual_meta.o.csv")
 
-isnv_by_day.p <- ggplot(snv_qual_meta.o, aes(x = as.factor(DPSO), y = iSNV)) + geom_boxplot() + xlab("Day Post Symptom Onset") + geom_jitter() #+ ylim(0, 10)
-
+isnv_by_day.p <- ggplot(snv_qual_meta.o, aes(x = as.factor(DPSO), y = iSNV)) + geom_boxplot() + xlab("Day Post Symptom Onset") + geom_jitter() + theme_bw() #+ ylim(0, 10)
+ggsave(plot = isnv_by_day.p, filename = "../results/plots/SNVbyDPSO.jpg", device = "jpeg")
 
 # =========== Histogram of iSNV counts per sample ================
 
-
-isnv.per.sample <- ggplot(snv_qual_meta.o, aes(x = iSNV)) + geom_histogram(binwidth = 1, color = "white", fill = "maroon") + xlab("Number of iSNV") + ylab("Number of samples") + theme_bw()
+isnv.per.sample <- ggplot(snv_qual_meta.o, aes(x = iSNV)) + geom_histogram(binwidth = 1, fill = "maroon") + xlab("Number of iSNV (Bin Width = 1)") + ylab("Number of samples") + theme_bw()
+ggsave(plot = isnv.per.sample, filename = "../results/plots/SNVperSample.jpg", device = "jpeg")
 
 # =========== iSNV counts per sample by genome copy number ================
 
 snv_qual_meta.o.above_E5 <- filter(snv_qual_meta.o, genome_copy_per_ul > 100000)
 isnv.per.sample.aboveE5 <- ggplot(snv_qual_meta.o.above_E5, aes(x = iSNV)) + geom_histogram(binwidth = 1, color = "white", fill = "maroon") + xlab("Number of iSNV") + ylab("Number of samples") + ggtitle("iSNV in samples above E5 copies/uL") + theme_bw()
 
-snv_by_copynum <- ggplot(snv_qual_meta.o, aes(x = log(genome_copy_per_ul, 10), y = iSNV)) + geom_point(shape = 19) + xlab("Log (base 10) of genome copies/uL") + geom_vline(xintercept = 5, linetype = "dotted", color = "maroon", size = 1.5)
+snv_by_copynum <- ggplot(snv_qual_meta.o, aes(x = log(genome_copy_per_ul, 10), y = iSNV)) + geom_point(shape = 19) + xlab("Log (base 10) of genome copies/uL") + geom_vline(xintercept = 5, linetype = "dotted", color = "maroon", size = 1.5) + theme_bw()
 snv_by_gc <- lm(data = snv_qual_meta.o, formula = iSNV ~ log(genome_copy_per_ul, 10))
 summary(snv_by_gc)
+ggsave(plot = snv_by_copynum, filename = "../results/plots/SNVbyCopyNumber.jpg", device = "jpeg")
 
 # =========== iSNV counts by vaccination status ================
 
@@ -76,25 +76,28 @@ plot.median <- function(x) {
 isnv_by_vaccination <- ggplot(snv_qual_meta.o, aes(y = iSNV, x = as.factor(vaccination_status))) +
   geom_dotplot(stackdir = "center", binaxis = 'y', binwidth = 1, dotsize = 0.5) +
   stat_summary(fun.data = "plot.median", geom = "errorbar", colour = "red", width = 0.95, size = 0.3) +
-  scale_x_discrete(labels = c("Not Vaccinated", "Vaccinated")) + xlab("")
+  scale_x_discrete(labels = c("Not Vaccinated", "Vaccinated")) + xlab("") + theme_bw()
+ggsave(plot = isnv_by_vaccination, filename = "../results/plots/SNVbyVaccinationStatus.jpg", device = "jpeg")
 
 # =========== iSNV across genome segments ================
 
 # Using the list excluding the outlier individual
 min.qual$chr <- factor(min.qual$chr, levels = rev(c("PB2","PB1","PA","HA","NP","NR","M1","NS")))
 
-chrs$chr <- factor(chrs$chr,levels = levels(min.qual$chr)) # set factors on the is meta data
+chrs$chr <- factor(chrs$chr, levels = levels(min.qual$chr)) # set factors on the is meta data
 
-genome_loc.p <- ggplot(min.qual,aes(x=pos,y=chr)) +
-  geom_point(aes(color=class_factor),shape=108,size=5)+
-  geom_segment(data=chrs,aes(x = start, y = chr, xend = stop, yend = chr)) +
+genome_loc.p <- ggplot(min.qual, aes(x = pos, y = chr)) +
+  geom_point(aes(color = class_factor), shape = 108, size = 5 )+
+  geom_segment(data = chrs, aes(x = start, y = chr, xend = stop, yend = chr)) +
   ylab("") +
   xlab("") +
-  scale_color_manual(name="",values=palette[c(4,3)]) +
-  theme(axis.ticks =element_blank(),
-        axis.line.x = element_blank(), axis.line.y=element_blank()) +
-  scale_x_continuous(breaks=c()) +
-  theme(legend.position = "right")
+  scale_color_manual(name = "", values = palette[c(4,3)]) +
+  theme(axis.ticks = element_blank(),
+        axis.line.x = element_blank(), axis.line.y = element_blank()) +
+  scale_x_continuous(breaks = c()) +
+  theme(legend.position = "right") + theme_minimal()
+
+ggsave(plot = genome_loc.p, filename = "../results/plots/SNVbyGenomeLocation.jpg", device = "jpeg")
 
 # add multiple iSNV
 # In how many people (ENROLLID) is the muation found. It would have to be minor in both 
@@ -119,7 +122,9 @@ min.qual.low <- subset(min.qual, freq.var < 0.5) # Exclude outlier individual, a
 freq_hist.p <- ggplot(min.qual.low, aes(x=freq.var,fill=class_factor)) + geom_histogram(color="white",binwidth=.05,position=position_dodge(),boundary = 0.02) +
   xlab("Frequency") + ylab("iSNV") +
   scale_fill_manual(name="" ,values=palette[c(4,3)] )+
-  theme(legend.position = c(0.5, 0.5))
+  theme(legend.position = c(0.5, 0.5)) + theme_classic()
+
+ggsave(plot = freq_hist.p, filename = "../results/plots/SNVbyFrequency.jpg", device = "jpeg")
 
 # =========== Distribution of sampling times infections with home and clinic samples ================
 
@@ -133,9 +138,11 @@ meta_homeAndClinic$sort_order <- 1:nrow(meta_homeAndClinic)
 sampling_distribution <- ggplot(meta_homeAndClinic, aes(x = DPS1, xend = DPS2, y = sort_order, yend = sort_order)) + geom_segment(color = palette[1]) + ylab("") +
   xlab("Day post symptom onset") + 
   theme(axis.line.y=element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank()) +
-  geom_point(aes(y = sort_order, x = DPS1), color=palette[5])+
-  geom_point(aes(y = sort_order, x = DPS2), color=palette[5]) + 
-  scale_x_continuous(breaks = -2:6)
+  geom_point(aes(y = sort_order, x = DPS1), color=palette[1])+
+  geom_point(aes(y = sort_order, x = DPS2), color=palette[1]) + 
+  scale_x_continuous(breaks = -2:6) + theme_classic()
+
+ggsave(plot = sampling_distribution, filename = "../results/plots/SampleCollectionTimes.jpg", device = "jpeg")
 
 # =========== Concordance between sequencing replicates ================
 
@@ -151,13 +158,15 @@ min.qual_not_coll.1 <- mutate(min.qual_not_coll.1, mut_id = paste0(mutation, "_"
 min.qual_not_coll.2 <- mutate(min.qual_not_coll.2, mut_id = paste0(mutation, "_", ALV_ID))
 merged <- merge(min.qual_not_coll.1, min.qual_not_coll.2, by = "mut_id")
 
-replicate_concordance <- ggplot(data = merged, aes(x=freq.var.x, y=freq.var.y))+
-  geom_point(aes(color=as.factor(floor(log10(genome_copy_per_ul.x)))))+
-  geom_abline(slope=1,intercept = 0,lty=2)+
-  scale_y_continuous(limits=c(0,0.5))+
-  scale_x_continuous(limits=c(0,0.5))+
-  xlab("Frequency in replicate 1")+ ylab("Frequency in replicate 2")+
-  scale_color_manual(name="Log(copies/ul)",values=palette[c(4,3)])
+replicate_concordance <- ggplot(data = merged, aes(x = freq.var.x, y = freq.var.y)) +
+  geom_point(aes(color = as.factor(floor(log10(genome_copy_per_ul.x))))) +
+  geom_abline(slope = 1,intercept = 0, lty = 2) +
+  scale_y_continuous(limits = c(0,0.5)) +
+  scale_x_continuous(limits = c(0,0.5)) +
+  xlab("Frequency in replicate 1") + ylab("Frequency in replicate 2") +
+  scale_color_manual(name = "Log(copies/ul)", values = palette[c(4,3)]) + theme_bw()
+
+ggsave(plot = replicate_concordance, filename = "../results/plots/ReplicateConcordance.jpg", device = "jpeg")
 
 # =========== Concordance between frequency in home and clinic isolates ================ 
 
@@ -178,7 +187,7 @@ merge(home, clinic, by = "mutation") %>% select(mutation, ALV_ID.x, SampleNumber
 home_clinic_concordance <- ggplot(data = home_vs_clinic, aes(x=freq.var.x,y=freq.var.y)) + geom_point()+
   xlab("Frequency in home isolate") + ylab("Frequency in clinic isolate") + 
   geom_abline(slope=1,intercept = 0,lty=2)+
-  scale_x_continuous(limits = c(0,0.5))+scale_y_continuous(limits = c(0,0.5))
+  scale_x_continuous(limits = c(0,0.5))+scale_y_continuous(limits = c(0,0.5)) + theme_bw()
 
 # =========== Changes in frequency across paired home and clinic isolates ================ 
 
@@ -215,9 +224,9 @@ intra.plot <- ggplot(intra, aes(x = as.factor(within_host_time),
                              fill = Endpoint)) +
   geom_quasirandom(pch=21,color='black',size=2) +
   scale_fill_manual(values=palette[c(1,3,5)],name="") +
-  xlab("Time within host (days)") + ylab("Change in frequency") + ggtitle("SNV across paired home and clinic samples")
+  xlab("Time within host (days)") + ylab("Change in frequency") + ggtitle("SNV across paired home and clinic samples") + theme_bw()
 
-
+ggsave(plot = intra.plot, filename = "../results/plots/IntraHostSNV_Longitudinal.jpg", device = "jpeg")
 
 # =========== SNVs in HA antigenic vs non-antigenic sites ================ 
 

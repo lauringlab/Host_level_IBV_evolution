@@ -24,7 +24,7 @@ transmission_freqs_no_cut_poly_in_donor <- read_csv("../data/processed/no_cut_tr
 # ================== Quick and Dirty: Use all of JT's support functions in HIVEr/transmission_models.R to do PA model for qual SNV. =========================
 
 trans_freq.comp <- transmission_freqs_poly_in_donor
-trans_freq.comp <- transmission_freqs_no_cut_poly_in_donor
+#trans_freq.comp <- transmission_freqs_no_cut_poly_in_donor
 
 pa_total_fit <- trans_fit(trans_freq.comp, Nb_max = 100, model = "PA", threshold = NULL, acc = NULL, pair_id)
 
