@@ -5,6 +5,7 @@
 # ================== Read in data, import packages =========================
 
 library(tidyverse)
+library(lubridate)
 
 setwd("/Users/avalesano/Documents/MSTP/LauringLab/Host_level_IBV_evolution/scripts/")
 
@@ -150,6 +151,90 @@ polish_freq <- function(df, relative, min_freq = 0)
   return(subset(df, alleles == 2, select = -c(alleles)))
 }
 
+# ================== JT's function: get specimens closest to time of transmission ====================
+
+#' Finding SPECID for transmission pairs
+#'
+#' Identifies the SPECID collected nearest a given date, and on the correct side of
+#' the date when specified. The criteria is
+#'
+#' 1) Sample closest to transmission that are on the "right side" of tranmission
+#' (before transmission for donor if possible)
+#'
+#' 2) Titer is the tie breaker when applicable.
+#'
+#' 3) If no iSNV were found in a donor sample and iSNV==T we take the sample with iSNV present.
+#'
+#' @param meta data frame with meta data con
+#' @param date The estimated trasmission date
+#' @param enrollid The enrollid
+#' @param case c("donor","recipient")
+#' @param iSNV boolan if TRUE then we take the sample that has iSNV if the
+#' "best fit" doesn't. This is the historic use of the function. Recall that we
+#' do not have samples before transmission in many cases anyway.
+#'
+#' @return The SPECID that best fits the critea
+#' @examples
+#'
+#' d<-small_meta$collect[4]+1
+#' get_close(small_meta,d,enrollid = "50001",case = "Donor",iSNV = TRUE)
+#' @export
+
+
+get_close <- function(meta, date, enrollid, case, iSNV = TRUE)
+{
+  id_snv = filter(meta, ENROLLID == enrollid & coverage_qualified == TRUE)
+  
+  if(nrow(id_snv) == 1) # if there is only one sample from this individual
+  { 
+    return(id_snv$ALV_ID)
+  }
+  else if(nrow(id_snv) == 2) # there are two samples for this individual
+  { 
+    id_snv = dplyr::mutate(id_snv, dtrans = collect_date_master - date)
+    
+    # For donors we want the largest dtrans possible less than 0 or the smallest
+    # possitive dtrans. For the recipient we want the smallest possitive dtrans.
+    # It should be impossible for the recipient to have a negative dtrans.
+    
+    if(all(id_snv$dtrans < 0))
+    {
+      # all are less than 0 so this puts the sample with least negative dtrans on top. 
+      # titer is the tie braker
+      id_snv = id_snv[order(id_snv$dtrans, id_snv$genome_copy_per_ul, decreasing = TRUE),]
+    } else
+    {
+      # There is 1 or no dtrans less than 0 so this puts the sample with the
+      # lowest dtrans (either the negative 1 or the smallest positive 1) on top.
+      # titer is the tie braker
+      id_snv = id_snv[order(id_snv$dtrans, -id_snv$genome_copy_per_ul, decreasing = FALSE),]
+    }
+    if(id_snv$iSNV[1] == 0 & id_snv$iSNV[2] > 0 & iSNV == TRUE)
+    {
+      # finally if there were no polymorphisms in the first sample and
+      # there were a few in the second then we take the second
+      warning(paste0(case," ALV_ID ", id_snv$ALV_ID[2], "  being used for ENROLLID ",
+                     id_snv$ENROLLID[1], " because no iSNV were found in the prefered
+                     ALV_ID" , id_snv$ALV_ID[1]),"\n")
+      return(id_snv$ALV_ID[2])
+    } else
+    {
+      if(id_snv$genome_copy_per_ul[1] < id_snv$genome_copy_per_ul[2])
+      {
+        message(paste0("ALV_ID ", id_snv$ALV_ID[1],
+                       "  being used for ENROLLID ", id_snv$ENROLLID[1],
+                       " based on the time to the transmission date",
+                       "even though this sample has a lower titer than " , id_snv$ALV_ID[2],"\n"))
+      }
+      return(id_snv$ALV_ID[1])
+    }
+  }else
+  {
+    stop("Stopping because neither 1 nor 2 specid found for this sample! Yikes!")
+  }
+}
+
+
 # ================== Arrange data ===========================
 
 useful_transmission_pairs <- filter(transmission_pairs, valid == TRUE & quality_distance == TRUE)
@@ -160,10 +245,20 @@ flipped <- plyr::rename(flipped, c("ENROLLID1" = "ENROLLID2", "ENROLLID2" = "ENR
 flipped$pair_id = flipped$pair_id + 0.5
 useful_transmission_pairs_withDual <- rbind(useful_transmission_pairs, flipped)
 
-test <- get_freqs(c("MH4289","MH4364"), var_qual)
-test.comp <- polish_freq(test, freq1, 0.02)
+### Want to get the specimens that are closest to the time of transmission (not what was done for L1-norm).
+# First prep the metadata.
+meta_long <- mutate(meta_long, collect_date_master = mdy(ifelse(is_home_spec, home_spec_date, collect)))
+var_qual_minority <- filter(var_qual, freq.var < 0.98)
+minority.count <- plyr::ddply(var_qual_minority, ~ALV_ID, summarize, iSNV = length(unique(mutation)))
+meta_long <- left_join(meta_long, minority.count)
+meta_long$iSNV[is.na(meta_long$iSNV)] <- 0 # No variants in these samples
 
-### Essentially using the samples that were used for L1-norm. Home sample if available, otherwise use clinic sample. May want to change this here.
+useful_transmission_pairs_withDual %>% rowwise() %>% mutate(ALV_ID_1 = get_close(meta_long, transmission, ENROLLID1, "donor"), ALV_ID_2 = get_close(meta_long, transmission, ENROLLID2, "recipient")) -> useful_transmission_pairs_withDual
+useful_transmission_pairs_withDual <- mutate(useful_transmission_pairs_withDual, collect1 = meta_long$collect_date_master[match(ALV_ID_1, meta_long$ALV_ID)], collect2 = meta_long$collect_date_master[match(ALV_ID_2, meta_long$ALV_ID)])
+
+# Remove the mixed infection ENROLLID, if they are present.
+mixed <- c("50425")
+useful_transmission_pairs_withDual <- filter(useful_transmission_pairs_withDual, !(ENROLLID1 %in% mixed) & !(ENROLLID2 %in% mixed))
 
 trans_freq <- plyr::adply(useful_transmission_pairs_withDual, 1, function(x) {get_freqs(c(x$ALV_ID_1, x$ALV_ID_2), var_qual)})
 write.csv(trans_freq, file = "../data/processed/trans_freq.csv")
@@ -177,7 +272,7 @@ no_cut_trans_freq <- plyr::adply(useful_transmission_pairs_withDual, 1, function
 write.csv(no_cut_trans_freq, file = "../data/processed/no_cut_trans_freq.csv")
 
 # Reduce to sites that are polymorphic in the donor.
-no_cut_trans_freq.comp <- polish_freq(no_cut_trans_freq, freq1, 0) # ERROR HERE. Why are the allele counts either 0, 2, or 4? 4 is causing error.
+no_cut_trans_freq.comp <- polish_freq(no_cut_trans_freq, freq1, 0)
 no_cut_trans_freq.comp$found <- no_cut_trans_freq.comp$freq2 > 0 # Was it found in the second sample?
 write.csv(no_cut_trans_freq.comp, file =  "../data/processed/no_cut_transmission_pairs_freq.poly_donor.csv")
 
