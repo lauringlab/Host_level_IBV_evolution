@@ -69,8 +69,8 @@ cfIAV_data <- rbind(IBV_snv, IAV_snv)
 cfIAV.plot.identity <- ggplot(cfIAV_data, aes(x = iSNV, fill = type)) + geom_histogram(binwidth = 1, alpha = 0.5, color = "white", position = "identity") + scale_fill_manual(name = "Type", values = c(palette[3], palette[5])) + xlab("Number of iSNV") + ylab("Number of samples") + theme_bw()
 cfIAV.plot.dodge <- ggplot(cfIAV_data, aes(x = iSNV, fill = type)) + geom_histogram(binwidth = 1, alpha = 1, color = "white", position = "dodge") + scale_fill_manual(name = "Type", values = c(palette[3], palette[5])) + xlab("Number of iSNV") + ylab("Number of samples") + theme_bw()
 
-ggsave(plot = IAV.isnv.per.sample, filename = "../results/plots/SNVperSample_cfIAV_identity.jpg", device = "jpeg")
-ggsave(plot = IAV.isnv.per.sample, filename = "../results/plots/SNVperSample_cfIAV_dodge.jpg", device = "jpeg")
+ggsave(plot = cfIAV.plot.identity, filename = "../results/plots/SNVperSample_cfIAV_identity.jpg", device = "jpeg")
+ggsave(plot = cfIAV.plot.dodge, filename = "../results/plots/SNVperSample_cfIAV_dodge.jpg", device = "jpeg")
 
 # =========== iSNV counts per sample by genome copy number ================
 
@@ -120,6 +120,8 @@ isnv_minority_nomixed_count <- mutate(isnv_minority_nomixed_count, scratch = pas
 multiple <- subset(isnv_minority_nomixed, scratch %in% isnv_minority_nomixed_count$scratch[isnv_minority_nomixed_count$counts > 1])
 
 genome_location.plot.multiple <- genome_location.plot + geom_point(data = multiple, aes(x = pos, y = as.numeric(chr) + 0.2, color = class_factor), size = 1, shape = 25)
+
+ggsave(plot = genome_location.plot.multiple, filename = "../results/plots/SNVbyGenomeLocation_WithMultiple.jpg", device = "jpeg")
 
 # =========== Frequency by Nonsyn/Syn ================
 
@@ -205,36 +207,47 @@ home_clinic_concordance <- ggplot(data = home_vs_clinic, aes(x=freq.var.x,y=freq
 
 # =========== Changes in frequency across paired home and clinic isolates ================ 
 
-variants_for_paired_sample_analysis <- isnv_nomixed
+# Start with all variants from 2-50%, excluding the mixed infection.
+variants_for_paired_sample_analysis <- isnv_minority_nomixed 
 
-meta_homeAndClinic <- filter(meta_short, home_spec == 1) # only those from which we have both home and clinic samples
+# Wrangle the metadata and variants.
+meta_homeAndClinic <- filter(meta_short, home_spec == 1) # Take only those from which we have both home and clinic samples
 meta_homeAndClinic <- mutate(meta_homeAndClinic, within_host_time = collect - home_spec_date)
 variants_home <- filter(variants_for_paired_sample_analysis, ALV_ID %in% meta_homeAndClinic$home_spec_accn)
 variants_clinic <- filter(variants_for_paired_sample_analysis, ALV_ID %in% meta_homeAndClinic$SPECID)
+variants_home <- select(variants_home, ENROLLID, ALV_ID, freq.var, mutation, class_factor)
+variants_clinic <- select(variants_clinic, ENROLLID, ALV_ID, freq.var, mutation, class_factor)
 variants_home <- mutate(variants_home, mut_id = paste0(mutation, "_", ENROLLID))
 variants_clinic <- mutate(variants_clinic, mut_id = paste0(mutation, "_", ENROLLID))
-
+variants_home <- mutate(variants_home, mut_alv_id = paste0(mutation, "_", ALV_ID))
+variants_clinic <- mutate(variants_clinic, mut_alv_id = paste0(mutation, "_", ALV_ID))
 intra <- merge(variants_home, variants_clinic, by = "mut_id", all = TRUE)
-intra <- mutate(intra, freq1 = ifelse(is.na(freq.var.x), 0, freq.var.x))
+
+# For those that are lost, we need to know if they became fixed. This info isn't in isnv_nomixed, which only includes 2-98%.
+quality_var %>% mutate(mut_alv_id = paste0(mutation, "_", ALV_ID)) %>% filter(freq.var > 0.98) -> quality_var_fixed
+intra <- mutate(intra, freq1 = ifelse(is.na(freq.var.x), quality_var_fixed$freq.var[match(mut_alv_id.x, quality_var_fixed$mut_alv_id)], freq.var.x)) # If freq in sample is NA, see if it's in quality_var_fixed. 
+intra <- mutate(intra, freq2 = ifelse(is.na(freq.var.y), quality_var_fixed$freq.var[match(mut_alv_id.y, quality_var_fixed$mut_alv_id)], freq.var.y))
+intra <- mutate(intra, freq1 = ifelse(is.na(freq.var.x), 0, freq.var.x)) # If the previous lines found nothing, then make them 0.
 intra <- mutate(intra, freq2 = ifelse(is.na(freq.var.y), 0, freq.var.y))
-intra <- mutate(intra, ENROLLID = ifelse(!is.na(ENROLLID.x), ENROLLID.x, ENROLLID.y))
 
 # By enroll ID, give it the withinhost time from the metadata.
+intra <- mutate(intra, ENROLLID = ifelse(!is.na(ENROLLID.x), ENROLLID.x, ENROLLID.y))
 intra <- merge(intra, select(meta_homeAndClinic, ENROLLID, within_host_time), by = "ENROLLID")
 
+# Define each mutation type.
 intra %>% mutate(Endpoint = "Persistent") %>%
-  mutate(Endpoint = if_else(freq1 == 0,"Arisen", Endpoint)) %>%
-  mutate(Endpoint = if_else(freq2 == 0,"Lost", Endpoint)) -> intra
+  mutate(Endpoint = if_else(freq1 == 0, "Arisen above 2%", Endpoint)) %>%
+  mutate(Endpoint = if_else(freq2 == 0, "Lost below 2%", Endpoint)) -> intra
+intra$Endpoint <- factor(intra$Endpoint, levels = c("Persistent", "Arisen above 2%", "Lost below 2%"), ordered = TRUE)
+intra <- mutate(intra, class_factor = ifelse(is.na(class_factor.y), class_factor.x, class_factor.y))
 
-intra$Endpoint <- factor(intra$Endpoint, levels = c("Persistent","Arisen","Lost"), ordered = TRUE)
-
-# Maybe frame by syn/non-syn?
+# Make and save the plot.
 intra.plot <- ggplot(intra, aes(x = as.factor(within_host_time),
                              y = freq2 - freq1,
                              fill = Endpoint)) +
-  geom_quasirandom(pch=21,color='black',size=2) +
-  scale_fill_manual(values=palette[c(1,3,5)],name="") +
-  xlab("Time within host (days)") + ylab("Change in frequency") + ggtitle("SNV across paired home and clinic samples") + theme_bw()
+  geom_quasirandom(pch=21, color = "black", size = 2) +
+  scale_fill_manual(values = palette[c(1, 3, 5)], name = "") +
+  xlab("Time within host (days)") + ylab("Change in frequency") + ggtitle("Minority SNV across paired home and clinic samples") + theme_bw() + facet_wrap(~class_factor)
 
 ggsave(plot = intra.plot, filename = "../results/plots/IntraHostSNV_Longitudinal.jpg", device = "jpeg")
 
