@@ -109,41 +109,41 @@ diverse_variants <- diverse_sites(good_coverage_variants, 1, season, pcr_result,
 
 freq.diverse.hist <- ggplot(diverse_variants, aes(freq.var)) + geom_histogram(binwidth = 0.01) + ylim(0, 4000)
 
-diverse_variants %>% group_by(ALV_ID) %>% do(collapse_localcov(.)) -> qual
+diverse_variants %>% group_by(ALV_ID) %>% do(collapse_localcov(.)) -> quality_var
 
-qual$class_factor = NA
-qual$class_factor[grep("Noncoding", qual$Class)] <- "Noncoding"
-qual$class_factor[grep('Syn', qual$Class)] <- "Synonymous"
-qual$class_factor[grep('Nonsyn', qual$Class)] <- "Nonsynonymous"
-qual$class_factor <- as.factor(qual$class_factor)
-qual <- subset(qual, class_factor != "Noncoding")
+quality_var$class_factor = NA
+quality_var$class_factor[grep("Noncoding", quality_var$Class)] <- "Noncoding"
+quality_var$class_factor[grep('Syn', quality_var$Class)] <- "Synonymous"
+quality_var$class_factor[grep('Nonsyn', quality_var$Class)] <- "Nonsynonymous"
+quality_var$class_factor <- as.factor(quality_var$class_factor)
+quality_var <- subset(quality_var, class_factor != "Noncoding")
 
-qual <- diverse_sites(qual, 1, season, pcr_result, pos, chr)
+quality_var <- diverse_sites(quality_var, 1, season, pcr_result, pos, chr)
 
-no_freq_cut <- qual
-qual %>% filter(freq.var > 0.02) -> qual
+no_freq_cut <- quality_var
+quality_var %>% filter(freq.var > 0.02) -> quality_var
 
-qualm <- monomorphic(qual, ALV_ID, season, chr, pos, pcr_result)
-no_freq_cut <- monomorphic(no_freq_cut, ALV_ID, season, chr, pos, pcr_result)
+quality_var_monomorphic <- monomorphic(qual, ALV_ID, season, chr, pos, pcr_result)
+no_freq_cut_monomorphic <- monomorphic(no_freq_cut, ALV_ID, season, chr, pos, pcr_result)
 
-qualms <- subset(qualm, !(ref == var & freq.var == 1))
-no_freq_cut <- subset(no_freq_cut, !(ref == var & freq.var == 1)) 
+quality_var_monomorphic <- subset(quality_var_monomorphic, !(ref == var & freq.var == 1))
+no_freq_cut_monomorphic <- subset(no_freq_cut_monomorphic, !(ref == var & freq.var == 1)) 
 
-write.csv(x = no_freq_cut, file = "../data/processed/no_freq_cut.qual.snv.csv")
-write.csv(x = qualms, file = "../data/processed/qual.snv.csv")
+write.csv(x = no_freq_cut_monomorphic, file = "../data/processed/no_freq_cut.qual.snv.csv")
+write.csv(x = quality_var_monomorphic, file = "../data/processed/qual.snv.csv")
 
 # ======================== Same thing, but no resolution by sample duplicates =======================
 
-diverse_variants -> qual
-qual$class_factor = NA
-qual$class_factor[grep("Noncoding", qual$Class)] <- "Noncoding"
-qual$class_factor[grep('Syn', qual$Class)] <- "Synonymous"
-qual$class_factor[grep('Nonsyn', qual$Class)] <- "Nonsynonymous"
-qual$class_factor <- as.factor(qual$class_factor)
-qual <- subset(qual, class_factor != "Noncoding")
-qual <- diverse_sites(qual, 1, season, pcr_result, pos, chr)
-qual %>% filter(freq.var > 0.02) -> qual
-qualm <- monomorphic(qual, ALV_ID, season, chr, pos, pcr_result)
-qualms <- subset(qualm, !(ref == var & freq.var == 1))
-write.csv(x = qualms, file = "../data/processed/qual.not.collapsed.snv.csv")
+diverse_variants -> quality_var
+quality_var$class_factor = NA
+quality_var$class_factor[grep("Noncoding", quality_var$Class)] <- "Noncoding"
+quality_var$class_factor[grep('Syn', quality_var$Class)] <- "Synonymous"
+quality_var$class_factor[grep('Nonsyn', quality_var$Class)] <- "Nonsynonymous"
+quality_var$class_factor <- as.factor(quality_var$class_factor)
+quality_var <- subset(quality_var, class_factor != "Noncoding")
+quality_var <- diverse_sites(quality_var, 1, season, pcr_result, pos, chr)
+quality_var %>% filter(freq.var > 0.02) -> quality_var
+quality_var <- monomorphic(quality_var, ALV_ID, season, chr, pos, pcr_result)
+quality_var <- subset(quality_var, !(ref == var & freq.var == 1))
+write.csv(quality_var, file = "../data/processed/qual.not.collapsed.snv.csv")
 
