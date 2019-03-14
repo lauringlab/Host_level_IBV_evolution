@@ -239,7 +239,7 @@ get_close <- function(meta, date, enrollid, case, iSNV = TRUE)
 
 useful_transmission_pairs <- filter(transmission_pairs, valid == TRUE & quality_distance == TRUE)
 
-# Account for dual directionality of pairs with same onset day
+### Account for dual directionality of pairs with same onset day
 flipped <- filter(useful_transmission_pairs, double == TRUE)
 flipped <- plyr::rename(flipped, c("ENROLLID1" = "ENROLLID2", "ENROLLID2" = "ENROLLID1", "onset1" = "onset2", "onset2" = "onset1"))
 flipped$pair_id = flipped$pair_id + 0.5
@@ -253,13 +253,21 @@ minority.count <- plyr::ddply(var_qual_minority, ~ALV_ID, summarize, iSNV = leng
 meta_long <- left_join(meta_long, minority.count)
 meta_long$iSNV[is.na(meta_long$iSNV)] <- 0 # No variants in these samples
 
-useful_transmission_pairs_withDual %>% rowwise() %>% mutate(ALV_ID_1 = get_close(meta_long, transmission, ENROLLID1, "donor"), ALV_ID_2 = get_close(meta_long, transmission, ENROLLID2, "recipient")) -> useful_transmission_pairs_withDual
+# Now get the samples. (There was a problem again with rowwise(). Use a sapply method.
+#useful_transmission_pairs_withDual %>% rowwise() %>% mutate(ALV_ID_1 = get_close(meta_long, transmission, ENROLLID1, "donor"), ALV_ID_2 = get_close(meta_long, transmission, ENROLLID2, "recipient")) -> useful_transmission_pairs_withDual
+FUN <- function(df, id)
+{
+  get_close(meta_long, df$transmission, id, "donor")
+}
+useful_transmission_pairs_withDual$ALV_ID_1 <- sapply(1:nrow(useful_transmission_pairs_withDual), function(x) FUN(useful_transmission_pairs_withDual[x,], useful_transmission_pairs_withDual[x,]$ENROLLID1))
+useful_transmission_pairs_withDual$ALV_ID_2 <- sapply(1:nrow(useful_transmission_pairs_withDual), function(x) FUN(useful_transmission_pairs_withDual[x,], useful_transmission_pairs_withDual[x,]$ENROLLID2))
 useful_transmission_pairs_withDual <- mutate(useful_transmission_pairs_withDual, collect1 = meta_long$collect_date_master[match(ALV_ID_1, meta_long$ALV_ID)], collect2 = meta_long$collect_date_master[match(ALV_ID_2, meta_long$ALV_ID)])
 
-# Remove the mixed infection ENROLLID, if they are present.
+### Remove the mixed infection ENROLLID, if they are present.
 mixed <- c("50425")
 useful_transmission_pairs_withDual <- filter(useful_transmission_pairs_withDual, !(ENROLLID1 %in% mixed) & !(ENROLLID2 %in% mixed))
 
+### Now get the variants.
 trans_freq <- plyr::adply(useful_transmission_pairs_withDual, 1, function(x) {get_freqs(c(x$ALV_ID_1, x$ALV_ID_2), var_qual)})
 write.csv(trans_freq, file = "../data/processed/trans_freq.csv")
 

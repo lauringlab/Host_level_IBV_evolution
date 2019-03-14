@@ -33,11 +33,11 @@ for(r in 1:nrow(meta_long))
 
 # ==================== ggtree ==========================
 
-palette <- wesanderson::wes_palette("FantasticFox1", 7, type = "continuous")
+#palette <- lacroix_palette("CeriseLimon", type = "discrete")
 
 raxml_tree <- ggtree(tree) + geom_treescale()
 #raxml_tree <- raxml_tree %<+% meta_long + geom_tiplab(aes(color = factor(pairs_house_id)), size = 3) + scale_color_manual(values = palette)
-raxml_tree <- raxml_tree %<+% meta_long + geom_tiplab(aes(color = factor(season)), size = 2) #+ scale_color_manual(values = palette)
+raxml_tree <- raxml_tree %<+% meta_long + geom_tiplab(aes(color = factor(season)), size = 2) + scale_color_manual(values = palette)
 
 raxml_tree <- raxml_tree + theme(legend.position = "bottom", legend.text = element_text(size = 11)) + labs(color = "House ID")
 raxml_tree <- raxml_tree + guides(colour = guide_legend(override.aes = list(size = 7, shape = 16, alpha = 1)))
