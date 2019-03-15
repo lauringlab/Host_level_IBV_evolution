@@ -21,6 +21,11 @@ qual_not_coll <- read_csv("../data/processed/qual.not.collapsed.snv.csv")
 chrs <- read.csv("../data/metadata/ibv.segs.csv", stringsAsFactors = T) # May need to check that this is correct.
 IAV_snv_qual_meta <- read_csv("../data/processed/IAV_snv_qual_meta.csv")
 
+plot.median <- function(x) {
+  m <- median(x)
+  c(y = m, ymin = m, ymax = m)
+}
+
 # =========== How severe was the 2% cutoff? ================
 
 nocut_isnv <- filter(no_freq_cut_var, freq.var < 0.98) # 8693 variants
@@ -73,10 +78,16 @@ cfIAV_data <- rbind(IBV_snv, IAV_snv)
 cfIAV.plot.identity <- ggplot(cfIAV_data, aes(x = iSNV, fill = type)) + geom_histogram(binwidth = 1, alpha = 0.5, color = "white", position = "identity") + scale_fill_manual(name = "Type", values = c(palette[3], palette[5])) + xlab("Number of iSNV") + ylab("Number of samples") + theme_bw()
 cfIAV.plot.dodge <- ggplot(cfIAV_data, aes(x = iSNV, fill = type)) + geom_histogram(binwidth = 1, alpha = 1, color = "white", position = "dodge") + scale_fill_manual(name = "Type", values = c(palette[3], palette[5])) + xlab("Number of iSNV") + ylab("Number of samples") + theme_bw()
 
+cfIAV.dotplot <- ggplot(cfIAV_data, aes(y = iSNV, x = as.factor(type))) +
+  geom_dotplot(stackdir = "center", binaxis = 'y', binwidth = 1, dotsize = 0.2) +
+  stat_summary(fun.data = "plot.median", geom = "errorbar", colour = "red", width = 0.95, size = 0.3) +
+  xlab("") + ylab("iSNV Per Sample") + theme_bw()
+
 ggsave(plot = cfIAV.plot.identity, filename = "../results/plots/SNVperSample_cfIAV_identity.jpg", device = "jpeg")
 ggsave(plot = cfIAV.plot.dodge, filename = "../results/plots/SNVperSample_cfIAV_dodge.jpg", device = "jpeg")
 ggsave(plot = cfIAV.plot.identity, filename = "../results/plots/SNVperSample_cfIAV_identity.pdf", device = "pdf")
 ggsave(plot = cfIAV.plot.dodge, filename = "../results/plots/SNVperSample_cfIAV_dodge.pdf", device = "pdf")
+ggsave(plot = cfIAV.dotplot, filename = "../results/plots/SNVperSample_cfIAV_dotplot.pdf", device = "pdf")
 
 # =========== iSNV counts per sample by genome copy number ================
 
@@ -87,11 +98,6 @@ ggsave(plot = snv_by_copynum, filename = "../results/plots/SNVbyCopyNumber.jpg",
 ggsave(plot = snv_by_copynum, filename = "../results/plots/SNVbyCopyNumber.pdf", device = "pdf")
 
 # =========== iSNV counts by vaccination status ================
-
-plot.median <- function(x) {
-  m <- median(x)
-  c(y = m, ymin = m, ymax = m)
-}
 
 isnv_by_vaccination <- ggplot(meta_snv, aes(y = iSNV, x = as.factor(vaccination_status))) +
   geom_dotplot(stackdir = "center", binaxis = 'y', binwidth = 1, dotsize = 0.2) +
