@@ -104,10 +104,10 @@ yam.cov <- mutate(yam.cov, chr = gsub("NA_clone1", "NR", chr))
 cov_plot(vic.cov, title = "Coverage on VIC Reference") -> vic.coverage.plot
 cov_plot(yam.cov, title = "Coverage on YAM Reference") -> yam.coverage.plot
 
-#vic.coverage.plot
-
 ggsave(filename = "../../results/plots/VIC_coverage_plot.jpg", plot = vic.coverage.plot, device = "jpeg", width = 10)
 ggsave(filename = "../../results/plots/YAM_coverage_plot.jpg", plot = yam.coverage.plot, device = "jpeg", width = 10)
+ggsave(filename = "../../results/plots/VIC_coverage_plot.pdf", plot = vic.coverage.plot, device = "pdf", width = 10)
+ggsave(filename = "../../results/plots/YAM_coverage_plot.pdf", plot = yam.coverage.plot, device = "pdf", width = 10)
 
 
 

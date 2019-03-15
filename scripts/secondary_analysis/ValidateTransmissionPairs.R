@@ -345,6 +345,7 @@ L1norm_plot <- ggplot(L1norm_plot_data, aes(x = L1_norm, fill = as.factor((valid
 L1norm_plot
 
 ggsave(plot = L1norm_plot, filename = "../results/plots/L1norm.jpg", device = "jpeg")
+ggsave(plot = L1norm_plot, filename = "../results/plots/L1norm.pdf", device = "pdf")
 
 # ============================== Number of SNVs per transmission pair sample ===================================
 
