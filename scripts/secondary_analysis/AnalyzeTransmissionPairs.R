@@ -297,3 +297,8 @@ ggsave(plot = trans_freq.p, filename = "../results/plots/RecipientVsDonorAll.jpg
 ggsave(plot = trans_freq.comp.p, filename = "../results/plots/RecipientVsDonor_DonorPolymorphic.jpg", device = "jpeg")
 ggsave(plot = no_cut_trans_freq.p, filename = "../results/plots/RecipientVsDonorAll_NoCutoff.jpg", device = "jpeg")
 ggsave(plot = no_cut_trans_freq.comp.p, filename = "../results/plots/RecipientVsDonor_DonorPolymorphic_NoCutoff.jpg", device = "jpeg")
+
+ggsave(plot = trans_freq.p, filename = "../results/plots/RecipientVsDonorAll.pdf", device = "pdf")
+ggsave(plot = trans_freq.comp.p, filename = "../results/plots/RecipientVsDonor_DonorPolymorphic.pdf", device = "pdf")
+ggsave(plot = no_cut_trans_freq.p, filename = "../results/plots/RecipientVsDonorAll_NoCutoff.pdf", device = "pdf")
+ggsave(plot = no_cut_trans_freq.comp.p, filename = "../results/plots/RecipientVsDonor_DonorPolymorphic_NoCutoff.pdf", device = "pdf")
