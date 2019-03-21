@@ -4,22 +4,20 @@
 
 # =========== Import packages, load data ================
 
-setwd("/Users/avalesano/Documents/MSTP/LauringLab/Host_level_IBV_evolution/scripts/")
-
 library(tidyverse)
 library(magrittr)
 library(wesanderson)
 library(ggbeeswarm)
 palette <- wesanderson::wes_palette("FantasticFox1")
 
-meta <- read_csv("../data/metadata/flu_b_2010_2017_v4LONG_withSeqInfo_gc.csv")
-meta_short <- read_csv("../data/metadata/flu_b_2010_2017_v4.csv")
-metadata_by_seq <- read_csv("../data/metadata/Metadata_By_Seq_withALVID.csv")
-quality_var <- read_csv("../data/processed/qual.snv.csv")
-no_freq_cut_var <- read_csv("../data/processed/no_freq_cut.qual.snv.csv")
-qual_not_coll <- read_csv("../data/processed/qual.not.collapsed.snv.csv")
-chrs <- read.csv("../data/metadata/ibv.segs.csv", stringsAsFactors = T) # May need to check that this is correct.
-IAV_snv_qual_meta <- read_csv("../data/processed/IAV_snv_qual_meta.csv")
+meta <- read_csv("data/metadata/flu_b_2010_2017_v4LONG_withSeqInfo_gc.csv")
+meta_short <- read_csv("data/metadata/flu_b_2010_2017_v4.csv")
+metadata_by_seq <- read_csv("data/metadata/Metadata_By_Seq_withALVID.csv")
+quality_var <- read_csv("data/processed/qual.snv.csv")
+no_freq_cut_var <- read_csv("data/processed/no_freq_cut.qual.snv.csv")
+qual_not_coll <- read_csv("data/processed/qual.not.collapsed.snv.csv")
+chrs <- read.csv("data/metadata/ibv.segs.csv", stringsAsFactors = T) # May need to check that this is correct.
+IAV_snv_qual_meta <- read_csv("data/processed/IAV_snv_qual_meta.csv")
 
 plot.median <- function(x) {
   m <- median(x)
@@ -41,10 +39,10 @@ ggplot(nocut_isnv, aes(freq.var)) + geom_histogram(binwidth = 0.0001) + xlim(0, 
 titer.plot <- ggplot(meta, aes(x = as.factor(DPSO), y = genome_copy_per_ul)) + geom_boxplot(notch = TRUE) + ylab(expression(paste(Genomes,"/" ,mu,L))) + scale_y_log10() + xlab("Days Post Symptom Onset") + theme_bw()
 titer.plot.scatter <- ggplot(meta, aes(x = DPSO, y = genome_copy_per_ul)) + geom_point() + ylab(expression(paste(Genomes,"/" , mu, L))) + scale_y_log10() + xlab("Days Post Symptom Onset") + theme_bw()
 
-ggsave(plot = titer.plot, filename = "../results/plots/TiterByDPSO_box.jpg", device = "jpeg")
-ggsave(plot = titer.plot.scatter, filename = "../results/plots/TiterByDPSO_scatter.jpg", device = "jpeg")
-ggsave(plot = titer.plot, filename = "../results/plots/TiterByDPSO_box.pdf", device = "pdf")
-ggsave(plot = titer.plot.scatter, filename = "../results/plots/TiterByDPSO_scatter.pdf", device = "pdf")
+ggsave(plot = titer.plot, filename = "results/plots/TiterByDPSO_box.jpg", device = "jpeg")
+ggsave(plot = titer.plot.scatter, filename = "results/plots/TiterByDPSO_scatter.jpg", device = "jpeg")
+ggsave(plot = titer.plot, filename = "results/plots/TiterByDPSO_box.pdf", device = "pdf")
+ggsave(plot = titer.plot.scatter, filename = "results/plots/TiterByDPSO_scatter.pdf", device = "pdf")
 
 # =========== iSNV by DPSO ================
 
@@ -56,17 +54,17 @@ meta_snv <- merge(meta_snv, isnv_minority_count, by="ALV_ID", all.x = TRUE)
 meta_snv$iSNV[is.na(meta_snv$iSNV)] <- 0 # NA means there were no variants; change to 0
 meta_snv$HA_iSNV[is.na(meta_snv$HA_iSNV)] <- 0
 
-write_csv(meta_snv, "../data/processed/meta_snv.csv")
+write_csv(meta_snv, "data/processed/meta_snv.csv")
 
 isnv_by_day.plot <- ggplot(meta_snv, aes(x = as.factor(DPSO), y = iSNV)) + geom_boxplot(outlier.shape = NA, notch = FALSE) + xlab("Day Post Symptom Onset") + geom_jitter(width = 0.3, height = 0.1) + theme_bw()
-ggsave(plot = isnv_by_day.plot, filename = "../results/plots/SNVbyDPSO.jpg", device = "jpeg")
-ggsave(plot = isnv_by_day.plot, filename = "../results/plots/SNVbyDPSO.pdf", device = "pdf")
+ggsave(plot = isnv_by_day.plot, filename = "results/plots/SNVbyDPSO.jpg", device = "jpeg")
+ggsave(plot = isnv_by_day.plot, filename = "results/plots/SNVbyDPSO.pdf", device = "pdf")
 
 # =========== Histogram of iSNV counts per sample ================
 
 isnv.per.sample <- ggplot(meta_snv, aes(x = iSNV)) + geom_histogram(binwidth = 1, fill = palette[5], color = "white") + xlab("Number of iSNV (Bin Width = 1)") + ylab("Number of samples") + theme_bw()
-ggsave(plot = isnv.per.sample, filename = "../results/plots/SNVperSample.jpg", device = "jpeg")
-ggsave(plot = isnv.per.sample, filename = "../results/plots/SNVperSample.pdf", device = "pdf")
+ggsave(plot = isnv.per.sample, filename = "results/plots/SNVperSample.jpg", device = "jpeg")
+ggsave(plot = isnv.per.sample, filename = "results/plots/SNVperSample.pdf", device = "pdf")
 
 # Compare to IAV data
 IBV_snv <- select(meta_snv, iSNV)
@@ -83,19 +81,19 @@ cfIAV.dotplot <- ggplot(cfIAV_data, aes(y = iSNV, x = as.factor(type))) +
   stat_summary(fun.data = "plot.median", geom = "errorbar", colour = "red", width = 0.95, size = 0.3) +
   xlab("") + ylab("iSNV Per Sample") + theme_bw()
 
-ggsave(plot = cfIAV.plot.identity, filename = "../results/plots/SNVperSample_cfIAV_identity.jpg", device = "jpeg")
-ggsave(plot = cfIAV.plot.dodge, filename = "../results/plots/SNVperSample_cfIAV_dodge.jpg", device = "jpeg")
-ggsave(plot = cfIAV.plot.identity, filename = "../results/plots/SNVperSample_cfIAV_identity.pdf", device = "pdf")
-ggsave(plot = cfIAV.plot.dodge, filename = "../results/plots/SNVperSample_cfIAV_dodge.pdf", device = "pdf")
-ggsave(plot = cfIAV.dotplot, filename = "../results/plots/SNVperSample_cfIAV_dotplot.pdf", device = "pdf")
+ggsave(plot = cfIAV.plot.identity, filename = "results/plots/SNVperSample_cfIAV_identity.jpg", device = "jpeg")
+ggsave(plot = cfIAV.plot.dodge, filename = "results/plots/SNVperSample_cfIAV_dodge.jpg", device = "jpeg")
+ggsave(plot = cfIAV.plot.identity, filename = "results/plots/SNVperSample_cfIAV_identity.pdf", device = "pdf")
+ggsave(plot = cfIAV.plot.dodge, filename = "results/plots/SNVperSample_cfIAV_dodge.pdf", device = "pdf")
+ggsave(plot = cfIAV.dotplot, filename = "results/plots/SNVperSample_cfIAV_dotplot.pdf", device = "pdf")
 
 # =========== iSNV counts per sample by genome copy number ================
 
 snv_by_copynum <- ggplot(meta_snv, aes(x = log(genome_copy_per_ul, 10), y = iSNV)) + geom_point(shape = 19) + xlab("Log (base 10) of genome copies/uL") + geom_vline(xintercept = 5, linetype = "dotted", color = palette[5], size = 1.5) + theme_bw()
 snv_by_gc <- lm(data = meta_snv, formula = iSNV ~ log(genome_copy_per_ul, 10))
 summary(snv_by_gc)
-ggsave(plot = snv_by_copynum, filename = "../results/plots/SNVbyCopyNumber.jpg", device = "jpeg")
-ggsave(plot = snv_by_copynum, filename = "../results/plots/SNVbyCopyNumber.pdf", device = "pdf")
+ggsave(plot = snv_by_copynum, filename = "results/plots/SNVbyCopyNumber.jpg", device = "jpeg")
+ggsave(plot = snv_by_copynum, filename = "results/plots/SNVbyCopyNumber.pdf", device = "pdf")
 
 # =========== iSNV counts by vaccination status ================
 
@@ -104,8 +102,8 @@ isnv_by_vaccination <- ggplot(meta_snv, aes(y = iSNV, x = as.factor(vaccination_
   stat_summary(fun.data = "plot.median", geom = "errorbar", colour = "red", width = 0.95, size = 0.3) +
   scale_x_discrete(labels = c("Not Vaccinated", "Vaccinated")) + xlab("") + theme_bw()
 
-ggsave(plot = isnv_by_vaccination, filename = "../results/plots/SNVbyVaccinationStatus.jpg", device = "jpeg")
-ggsave(plot = isnv_by_vaccination, filename = "../results/plots/SNVbyVaccinationStatus.pdf", device = "pdf")
+ggsave(plot = isnv_by_vaccination, filename = "results/plots/SNVbyVaccinationStatus.jpg", device = "jpeg")
+ggsave(plot = isnv_by_vaccination, filename = "results/plots/SNVbyVaccinationStatus.pdf", device = "pdf")
 
 # =========== iSNV across genome segments ================
 
@@ -124,8 +122,8 @@ genome_location.plot <- ggplot(isnv_minority_nomixed, aes(x = pos, y = chr)) +
   scale_x_continuous(breaks = c()) +
   theme(legend.position = "right") + theme_minimal() + theme(panel.grid.major = element_line(colour = "white"))
 
-ggsave(plot = genome_location.plot, filename = "../results/plots/SNVbyGenomeLocation.jpg", device = "jpeg")
-ggsave(plot = genome_location.plot, filename = "../results/plots/SNVbyGenomeLocation.pdf", device = "pdf")
+ggsave(plot = genome_location.plot, filename = "results/plots/SNVbyGenomeLocation.jpg", device = "jpeg")
+ggsave(plot = genome_location.plot, filename = "results/plots/SNVbyGenomeLocation.pdf", device = "pdf")
 
 # Mark minority SNV that are found in multiple individuals.
 
@@ -136,8 +134,8 @@ multiple <- subset(isnv_minority_nomixed, scratch %in% isnv_minority_nomixed_cou
 
 genome_location.plot.multiple <- genome_location.plot + geom_point(data = multiple, aes(x = pos, y = as.numeric(chr) + 0.2, color = class_factor), size = 1, shape = 25)
 
-ggsave(plot = genome_location.plot.multiple, filename = "../results/plots/SNVbyGenomeLocation_WithMultiple.jpg", device = "jpeg")
-ggsave(plot = genome_location.plot.multiple, filename = "../results/plots/SNVbyGenomeLocation_WithMultiple.pdf", device = "pdf")
+ggsave(plot = genome_location.plot.multiple, filename = "results/plots/SNVbyGenomeLocation_WithMultiple.jpg", device = "jpeg")
+ggsave(plot = genome_location.plot.multiple, filename = "results/plots/SNVbyGenomeLocation_WithMultiple.pdf", device = "pdf")
 
 # =========== Frequency by Nonsyn/Syn ================
 
@@ -146,8 +144,8 @@ freq_histogram <- ggplot(isnv_minority_nomixed, aes(x = freq.var, fill = class_f
   scale_fill_manual(name = "" , values = palette[c(4,3)])+
   theme(legend.position = c(0.5, 0.5)) + theme_classic()
 
-ggsave(plot = freq_histogram, filename = "../results/plots/SNVbyFrequency.jpg", device = "jpeg")
-ggsave(plot = freq_histogram, filename = "../results/plots/SNVbyFrequency.pdf", device = "pdf")
+ggsave(plot = freq_histogram, filename = "results/plots/SNVbyFrequency.jpg", device = "jpeg")
+ggsave(plot = freq_histogram, filename = "results/plots/SNVbyFrequency.pdf", device = "pdf")
 
 # =========== Distribution of sampling times infections with home and clinic samples ================
 
@@ -167,8 +165,8 @@ sampling_distribution <- ggplot(meta_homeAndClinic, aes(x = DPS1, xend = DPS2, y
   geom_point(aes(y = sort_order, x = DPS2), color = "black") + 
   scale_x_continuous(breaks = -2:6) + theme_classic() + theme(axis.line.y = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank())
 
-ggsave(plot = sampling_distribution, filename = "../results/plots/SampleCollectionTimes.jpg", device = "jpeg")
-ggsave(plot = sampling_distribution, filename = "../results/plots/SampleCollectionTimes.pdf", device = "pdf")
+ggsave(plot = sampling_distribution, filename = "results/plots/SampleCollectionTimes.jpg", device = "jpeg")
+ggsave(plot = sampling_distribution, filename = "results/plots/SampleCollectionTimes.pdf", device = "pdf")
 
 # =========== Concordance between sequencing replicates ================
 
@@ -201,10 +199,10 @@ replicate_concordance_no_mixed <- ggplot(data = merged_nomixed, aes(x = freq.var
   xlab("Frequency in replicate 1") + ylab("Frequency in replicate 2") +
   scale_color_manual(name = "Log(copies/ul)", values = palette[c(4,3)]) + theme_bw()
 
-ggsave(plot = replicate_concordance_all, filename = "../results/plots/ReplicateConcordance_All.jpg", device = "jpeg")
-ggsave(plot = replicate_concordance_no_mixed, filename = "../results/plots/ReplicateConcordance_NoMixed.jpg", device = "jpeg")
-ggsave(plot = replicate_concordance_all, filename = "../results/plots/ReplicateConcordance_All.pdf", device = "pdf")
-ggsave(plot = replicate_concordance_no_mixed, filename = "../results/plots/ReplicateConcordance_NoMixed.pdf", device = "pdf")
+ggsave(plot = replicate_concordance_all, filename = "results/plots/ReplicateConcordance_All.jpg", device = "jpeg")
+ggsave(plot = replicate_concordance_no_mixed, filename = "results/plots/ReplicateConcordance_NoMixed.jpg", device = "jpeg")
+ggsave(plot = replicate_concordance_all, filename = "results/plots/ReplicateConcordance_All.pdf", device = "pdf")
+ggsave(plot = replicate_concordance_no_mixed, filename = "results/plots/ReplicateConcordance_NoMixed.pdf", device = "pdf")
 
 # =========== Concordance between frequency in home and clinic isolates ================ 
 
@@ -269,12 +267,12 @@ intra.plot <- ggplot(intra, aes(x = as.factor(within_host_time),
   scale_fill_manual(values = palette[c(1, 3, 5)], name = "") +
   xlab("Time within host (days)") + ylab("Change in frequency") + ggtitle("Minority SNV across paired home and clinic samples") + theme_bw() + facet_wrap(~class_factor)
 
-ggsave(plot = intra.plot, filename = "../results/plots/IntraHostSNV_Longitudinal.jpg", device = "jpeg")
-ggsave(plot = intra.plot, filename = "../results/plots/IntraHostSNV_Longitudinal.pdf", device = "pdf")
+ggsave(plot = intra.plot, filename = "results/plots/IntraHostSNV_Longitudinal.jpg", device = "jpeg")
+ggsave(plot = intra.plot, filename = "results/plots/IntraHostSNV_Longitudinal.pdf", device = "pdf")
 
 # =========== SNVs in HA antigenic vs non-antigenic sites ================ 
 
-antigenic_sites <- read_csv("../data/processed/antigenic_positions.csv")
+antigenic_sites <- read_csv("data/processed/antigenic_positions.csv")
 
 VIC_start <- filter(antigenic_sites, Lineage == "B/VIC")$Start
 VIC_end <- filter(antigenic_sites, Lineage == "B/VIC")$End

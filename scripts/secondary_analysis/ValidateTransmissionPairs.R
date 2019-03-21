@@ -7,11 +7,9 @@
 library(tidyverse)
 library(magrittr)
 
-setwd("/Users/avalesano/Documents/MSTP/LauringLab/Host_level_IBV_evolution/scripts/")
-
-meta_long <- read_csv("../data/metadata/flu_b_2010_2017_v4LONG_withSeqInfo_gc.csv")
-qual <- read_csv("../data/processed/qual.snv.csv")
-meta_wide <- read_csv("../data/metadata/flu_b_2010_2017_v4.csv")
+meta_long <- read_csv("data/metadata/flu_b_2010_2017_v4LONG_withSeqInfo_gc.csv")
+qual <- read_csv("data/processed/qual.snv.csv")
+meta_wide <- read_csv("data/metadata/flu_b_2010_2017_v4.csv")
 
 # ================== Metadata wrangling ===================================
 
@@ -28,7 +26,7 @@ meta_wide <- mutate(meta_wide, haveQualityClinicSample = ifelse(clinic_onset %in
 
 meta_wide_seqd <- filter(meta_wide, haveQualityHomeSample == TRUE | haveQualityClinicSample == TRUE) # Have a home and/or clinic sample with quality sequence
 meta_wide_seqd <- mutate(meta_wide_seqd, ID_onset = paste0(ENROLLID, "_", onset)) # these are individual infections for which we have some sequence data
-write_csv(meta_wide_seqd, "../data/metadata/metadata_wide_quality_sequence.csv")
+write_csv(meta_wide_seqd, "data/metadata/metadata_wide_quality_sequence.csv")
 
 # ================== Get L1-norm: JT's functions, modified for my metadata set =========================
 
@@ -263,7 +261,7 @@ get_tp <- function(meta_one, interval)
 # For each individual, we have all infections that have at least one quality sample. That's in meta_wide. All of these have SNV-quality data.
 # Take home sample, unless not available, then just take clinic sample.
 
-meta_wide <- read_csv("../data/metadata/metadata_wide_quality_sequence.csv")
+meta_wide <- read_csv("data/metadata/metadata_wide_quality_sequence.csv")
 
 meta_wide <- mutate(meta_wide, sampleForDistanceAnalysis = ifelse(haveQualityHomeSample == TRUE, home_spec_accn, SPECID))
 meta_wide_unique <- filter(meta_wide, !(ENROLLID == "50003" & cluster == 0)) # 50003 is in here twice. Remove the one that's not in a cluster.
@@ -288,7 +286,7 @@ all_possible_pairs <- mutate(all_possible_pairs,
 all_possible_pairs <- subset(all_possible_pairs, ALV_ID_1 != ALV_ID_2) # remove self-comparisons
 all_possible_pairs <- subset(all_possible_pairs, time_onset >= 0) # only those with ALV_ID_2 sick later than or equal to ALV_ID_1
 
-write.csv(all_possible_pairs, file = "../data/processed/all_possible_pairs.csv")
+write.csv(all_possible_pairs, file = "data/processed/all_possible_pairs.csv")
 
 # ================== Use JT's code for distance calculation =========================
 
@@ -344,12 +342,12 @@ L1norm_plot <- ggplot(L1norm_plot_data, aes(x = L1_norm, fill = as.factor((valid
 
 L1norm_plot
 
-ggsave(plot = L1norm_plot, filename = "../results/plots/L1norm.jpg", device = "jpeg")
-ggsave(plot = L1norm_plot, filename = "../results/plots/L1norm.pdf", device = "pdf")
+ggsave(plot = L1norm_plot, filename = "results/plots/L1norm.jpg", device = "jpeg")
+ggsave(plot = L1norm_plot, filename = "results/plots/L1norm.pdf", device = "pdf")
 
 # ============================== Number of SNVs per transmission pair sample ===================================
 
-read_csv("../data/processed/snv_qual_meta.o.csv") %>% select(ALV_ID, iSNV) %>% rename(sampleForDistanceAnalysis = ALV_ID) -> snv_by_sample
+read_csv("data/processed/snv_qual_meta.o.csv") %>% select(ALV_ID, iSNV) %>% rename(sampleForDistanceAnalysis = ALV_ID) -> snv_by_sample
 merged <- merge(snv_by_sample, select(meta_wide_unique, ENROLLID, sampleForDistanceAnalysis), by = "sampleForDistanceAnalysis")
 select(merged, iSNV, ENROLLID) %>% rename(ENROLLID1 = ENROLLID) -> merged1
 select(merged, iSNV, ENROLLID) %>% rename(ENROLLID2 = ENROLLID) -> merged2
@@ -360,7 +358,7 @@ valid_pairs_snv <- rename(valid_pairs_snv, iSNV_in_recipient = iSNV)
 
 # ============================== Save the output ===============================
 
-write.csv(possible_pairs.dist, file = "../data/processed/possible.pairs.dist.csv")
-write.csv(valid_pairs_snv, file = "../data/processed/transmission_pairs.csv")
-write.csv(meta_wide_unique, file = "../data/processed/meta_wide_unique_forTransmissionAnalysis.csv")
+write.csv(possible_pairs.dist, file = "data/processed/possible.pairs.dist.csv")
+write.csv(valid_pairs_snv, file = "data/processed/transmission_pairs.csv")
+write.csv(meta_wide_unique, file = "data/processed/meta_wide_unique_forTransmissionAnalysis.csv")
 

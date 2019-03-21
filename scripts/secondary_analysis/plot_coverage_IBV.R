@@ -10,12 +10,10 @@ require(extrafont)
 require(HIVEr)
 require(cowplot)
 
-setwd("/Users/avalesano/Documents/MSTP/LauringLab/Host_level_IBV_evolution/scripts/secondary_analysis/")
-
 # ======================== Read in data, filter by lineage ================================
 
-vic.cov.files = c("../../data/raw/2445_VIC/all.coverage.csv", "../../data/raw/2446_VIC/all.coverage.csv")
-yam.cov.files = c("../../data/raw/2445_YAM/all.coverage.csv", "../../data/raw/2446_YAM/all.coverage.csv")
+vic.cov.files = c("data/raw/2445_VIC/all.coverage.csv", "data/raw/2446_VIC/all.coverage.csv")
+yam.cov.files = c("data/raw/2445_YAM/all.coverage.csv", "data/raw/2446_YAM/all.coverage.csv")
 
 # read_rbind is in HIVEr
 vic.cov <- read_rbind(vic.cov.files,
@@ -39,7 +37,7 @@ yam.cov <- read_rbind(yam.cov.files,
                     ))
 
 # Filter CSVs by lineage type.
-metadata <- read_csv("../../data/metadata/IBV_Sequenced_WithMetadata_InferredTypes.csv")
+metadata <- read_csv("data/metadata/IBV_Sequenced_WithMetadata_InferredTypes.csv")
 VIC_IDs <- filter(metadata, final_result == "B_VIC")
 YAM_IDs <- filter(metadata, final_result == "B_YAM")
 
@@ -93,9 +91,6 @@ cov_plot <- function(cov.df, title)
   return(cov.plot)
 }
 
-# --------------------------------- Figure 1 --------------------------------
-#  Coverage
-# ---------------------------------------------------------------------------
 
 # change chr names for NA_ and NA_clone1 to NR here.
 vic.cov <- mutate(vic.cov, chr = gsub("NA_", "NR", chr))
@@ -104,10 +99,10 @@ yam.cov <- mutate(yam.cov, chr = gsub("NA_clone1", "NR", chr))
 cov_plot(vic.cov, title = "Coverage on VIC Reference") -> vic.coverage.plot
 cov_plot(yam.cov, title = "Coverage on YAM Reference") -> yam.coverage.plot
 
-ggsave(filename = "../../results/plots/VIC_coverage_plot.jpg", plot = vic.coverage.plot, device = "jpeg", width = 10)
-ggsave(filename = "../../results/plots/YAM_coverage_plot.jpg", plot = yam.coverage.plot, device = "jpeg", width = 10)
-ggsave(filename = "../../results/plots/VIC_coverage_plot.pdf", plot = vic.coverage.plot, device = "pdf", width = 10)
-ggsave(filename = "../../results/plots/YAM_coverage_plot.pdf", plot = yam.coverage.plot, device = "pdf", width = 10)
+ggsave(filename = "results/plots/VIC_coverage_plot.jpg", plot = vic.coverage.plot, device = "jpeg", width = 10)
+ggsave(filename = "results/plots/YAM_coverage_plot.jpg", plot = yam.coverage.plot, device = "jpeg", width = 10)
+ggsave(filename = "results/plots/VIC_coverage_plot.pdf", plot = vic.coverage.plot, device = "pdf", width = 10)
+ggsave(filename = "results/plots/YAM_coverage_plot.pdf", plot = yam.coverage.plot, device = "pdf", width = 10)
 
 
 

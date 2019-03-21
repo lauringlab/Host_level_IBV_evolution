@@ -9,14 +9,12 @@ library(magrittr)
 library(tidyverse)
 library(ggplot2)
 
-setwd("/Users/avalesano/Documents/MSTP/LauringLab/Host_level_IBV_evolution/scripts/")
-
-variants <- read_csv("../data/processed/all.variants.csv")
-meta <- read_csv("../data/metadata/flu_b_2010_2017_v4LONG_withSeqInfo_gc.csv")
+variants <- read_csv("data/processed/all.variants.csv")
+meta <- read_csv("data/metadata/flu_b_2010_2017_v4LONG_withSeqInfo_gc.csv")
 
 # =========================== Join variant data and metadata ===============================
 
-metadata_by_seq <- read_csv("../data/metadata/Metadata_By_Seq_withALVID.csv")
+metadata_by_seq <- read_csv("data/metadata/Metadata_By_Seq_withALVID.csv")
 variants <- rename(variants, SampleNumber = Id)
 variants_withALVID <- merge(variants, select(metadata_by_seq, SampleNumber, ALV_ID), by="SampleNumber")
 variants_with_meta <- merge(variants_withALVID, meta, by="ALV_ID")
@@ -129,8 +127,8 @@ no_freq_cut_monomorphic <- monomorphic(no_freq_cut, ALV_ID, season, chr, pos, pc
 quality_var_monomorphic <- subset(quality_var_monomorphic, !(ref == var & freq.var == 1))
 no_freq_cut_monomorphic <- subset(no_freq_cut_monomorphic, !(ref == var & freq.var == 1)) 
 
-write.csv(x = no_freq_cut_monomorphic, file = "../data/processed/no_freq_cut.qual.snv.csv")
-write.csv(x = quality_var_monomorphic, file = "../data/processed/qual.snv.csv")
+write.csv(x = no_freq_cut_monomorphic, file = "data/processed/no_freq_cut.qual.snv.csv")
+write.csv(x = quality_var_monomorphic, file = "data/processed/qual.snv.csv")
 
 # ======================== Same thing, but no resolution by sample duplicates =======================
 
@@ -145,5 +143,5 @@ quality_var <- diverse_sites(quality_var, 1, season, pcr_result, pos, chr)
 quality_var %>% filter(freq.var > 0.02) -> quality_var
 quality_var <- monomorphic(quality_var, ALV_ID, season, chr, pos, pcr_result)
 quality_var <- subset(quality_var, !(ref == var & freq.var == 1))
-write.csv(quality_var, file = "../data/processed/qual.not.collapsed.snv.csv")
+write.csv(quality_var, file = "data/processed/qual.not.collapsed.snv.csv")
 

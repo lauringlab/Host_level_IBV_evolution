@@ -7,13 +7,11 @@
 library(tidyverse)
 library(lubridate)
 
-setwd("/Users/avalesano/Documents/MSTP/LauringLab/Host_level_IBV_evolution/scripts/")
-
-meta_long <- read_csv("../data/metadata/flu_b_2010_2017_v4LONG_withSeqInfo_gc.csv")
-meta_wide <- read_csv("../data/metadata/metadata_wide_quality_sequence.csv")
-transmission_pairs <- read_csv("../data/processed/transmission_pairs.csv")
-var_qual <- read_csv("../data/processed/qual.snv.csv")
-var_no_cut <- read_csv("../data/processed/no_freq_cut.qual.snv.csv")
+meta_long <- read_csv("data/metadata/flu_b_2010_2017_v4LONG_withSeqInfo_gc.csv")
+meta_wide <- read_csv("data/metadata/metadata_wide_quality_sequence.csv")
+transmission_pairs <- read_csv("data/processed/transmission_pairs.csv")
+var_qual <- read_csv("data/processed/qual.snv.csv")
+var_no_cut <- read_csv("data/processed/no_freq_cut.qual.snv.csv")
 
 # ================== Get Arranged Data: JT's functions, modified for my metadata set =========================
 
@@ -269,20 +267,20 @@ useful_transmission_pairs_withDual <- filter(useful_transmission_pairs_withDual,
 
 ### Now get the variants.
 trans_freq <- plyr::adply(useful_transmission_pairs_withDual, 1, function(x) {get_freqs(c(x$ALV_ID_1, x$ALV_ID_2), var_qual)})
-write.csv(trans_freq, file = "../data/processed/trans_freq.csv")
+write.csv(trans_freq, file = "data/processed/trans_freq.csv")
 
 # Reduce to sites that are polymorphic in the donor.
 trans_freq.comp <- polish_freq(trans_freq, freq1, 0.02)
 trans_freq.comp$found <- trans_freq.comp$freq2 > 0.02 # Was it found in the second sample?
-write.csv(trans_freq.comp, file = "../data/processed/transmission_pairs_freq.poly_donor.csv")
+write.csv(trans_freq.comp, file = "data/processed/transmission_pairs_freq.poly_donor.csv")
 
 no_cut_trans_freq <- plyr::adply(useful_transmission_pairs_withDual, 1, function(x){get_freqs(c(x$ALV_ID_1, x$ALV_ID_2), var_no_cut)})
-write.csv(no_cut_trans_freq, file = "../data/processed/no_cut_trans_freq.csv")
+write.csv(no_cut_trans_freq, file = "data/processed/no_cut_trans_freq.csv")
 
 # Reduce to sites that are polymorphic in the donor.
 no_cut_trans_freq.comp <- polish_freq(no_cut_trans_freq, freq1, 0)
 no_cut_trans_freq.comp$found <- no_cut_trans_freq.comp$freq2 > 0 # Was it found in the second sample?
-write.csv(no_cut_trans_freq.comp, file =  "../data/processed/no_cut_transmission_pairs_freq.poly_donor.csv")
+write.csv(no_cut_trans_freq.comp, file =  "data/processed/no_cut_transmission_pairs_freq.poly_donor.csv")
 
 
 # ================== Plot *donor* SNVs by frequency in recipient vs. donor ===========================
@@ -293,12 +291,12 @@ trans_freq.comp.p <- ggplot(trans_freq.comp, aes(x = freq1, y = freq2)) + geom_p
 no_cut_trans_freq.p <- ggplot(no_cut_trans_freq, aes(x = freq1, y = freq2)) + geom_point() + xlab("Frequency in donor") + ylab("Frequency in recipient") + theme_classic()
 no_cut_trans_freq.comp.p <- ggplot(no_cut_trans_freq.comp, aes(x = freq1, y = freq2)) + geom_point() + xlab("Frequency in donor") + ylab("Frequency in recipient") + theme_classic()
 
-ggsave(plot = trans_freq.p, filename = "../results/plots/RecipientVsDonorAll.jpg", device = "jpeg")
-ggsave(plot = trans_freq.comp.p, filename = "../results/plots/RecipientVsDonor_DonorPolymorphic.jpg", device = "jpeg")
-ggsave(plot = no_cut_trans_freq.p, filename = "../results/plots/RecipientVsDonorAll_NoCutoff.jpg", device = "jpeg")
-ggsave(plot = no_cut_trans_freq.comp.p, filename = "../results/plots/RecipientVsDonor_DonorPolymorphic_NoCutoff.jpg", device = "jpeg")
+ggsave(plot = trans_freq.p, filename = "results/plots/RecipientVsDonorAll.jpg", device = "jpeg")
+ggsave(plot = trans_freq.comp.p, filename = "results/plots/RecipientVsDonor_DonorPolymorphic.jpg", device = "jpeg")
+ggsave(plot = no_cut_trans_freq.p, filename = "results/plots/RecipientVsDonorAll_NoCutoff.jpg", device = "jpeg")
+ggsave(plot = no_cut_trans_freq.comp.p, filename = "results/plots/RecipientVsDonor_DonorPolymorphic_NoCutoff.jpg", device = "jpeg")
 
-ggsave(plot = trans_freq.p, filename = "../results/plots/RecipientVsDonorAll.pdf", device = "pdf")
-ggsave(plot = trans_freq.comp.p, filename = "../results/plots/RecipientVsDonor_DonorPolymorphic.pdf", device = "pdf")
-ggsave(plot = no_cut_trans_freq.p, filename = "../results/plots/RecipientVsDonorAll_NoCutoff.pdf", device = "pdf")
-ggsave(plot = no_cut_trans_freq.comp.p, filename = "../results/plots/RecipientVsDonor_DonorPolymorphic_NoCutoff.pdf", device = "pdf")
+ggsave(plot = trans_freq.p, filename = "results/plots/RecipientVsDonorAll.pdf", device = "pdf")
+ggsave(plot = trans_freq.comp.p, filename = "results/plots/RecipientVsDonor_DonorPolymorphic.pdf", device = "pdf")
+ggsave(plot = no_cut_trans_freq.p, filename = "results/plots/RecipientVsDonorAll_NoCutoff.pdf", device = "pdf")
+ggsave(plot = no_cut_trans_freq.comp.p, filename = "results/plots/RecipientVsDonor_DonorPolymorphic_NoCutoff.pdf", device = "pdf")

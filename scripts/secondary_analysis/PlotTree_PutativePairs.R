@@ -9,10 +9,9 @@ library(wesanderson)
 library(magrittr)
 library(ggtree)
 
-setwd("/Users/avalesano/Documents/MSTP/LauringLab/Host_level_IBV_evolution/scripts/")
-#meta_pairs <- read_csv("../data/processed/household_pairs_wSeqID.csv")
-meta_long <- read_csv("../data/metadata/flu_b_2010_2017_v4LONG_withSeqInfo_gc.csv")
-tree <- read.tree("../data/processed/RAxML_bestTree.IBV_raxml_PairAnalysis.tree")
+#meta_pairs <- read_csv("data/processed/household_pairs_wSeqID.csv")
+meta_long <- read_csv("data/metadata/flu_b_2010_2017_v4LONG_withSeqInfo_gc.csv")
+tree <- read.tree("data/processed/RAxML_bestTree.IBV_raxml_PairAnalysis.tree")
 
 # ======================== Some metadata wrangling ==========================
 
@@ -43,5 +42,5 @@ raxml_tree <- raxml_tree + theme(legend.position = "bottom", legend.text = eleme
 raxml_tree <- raxml_tree + guides(colour = guide_legend(override.aes = list(size = 7, shape = 16, alpha = 1)))
 raxml_tree
 
-ggsave(plot = raxml_tree, filename = "../results/plots/Tree_RAxML_BySeason.jpg", device = "jpeg", width = 10)
-ggsave(plot = raxml_tree, filename = "../results/plots/Tree_RAxML_BySeason.pdf", device = "pdf", width = 12)
+ggsave(plot = raxml_tree, filename = "results/plots/Tree_RAxML_BySeason.jpg", device = "jpeg", width = 10)
+ggsave(plot = raxml_tree, filename = "results/plots/Tree_RAxML_BySeason.pdf", device = "pdf", width = 12)
