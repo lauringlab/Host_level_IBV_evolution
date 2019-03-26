@@ -28,7 +28,7 @@ transmission_freqs_no_cut_poly_in_donor <- read_csv("data/processed/no_cut_trans
 
 ### Select which dataset to use: 2% frequency cutoff or no cutoff
 trans_freq.comp <- transmission_freqs_poly_in_donor
-#trans_freq.comp <- transmission_freqs_no_cut_poly_in_donor
+trans_freq.comp <- transmission_freqs_no_cut_poly_in_donor
 
 ### Run the maximum likelihood optimization.
 pa_total_fit <- trans_fit(trans_freq.comp, Nb_max = 100, model = "PA", threshold = NULL, acc = NULL, pair_id)
@@ -80,8 +80,7 @@ window_data.plot <- ggplot() + geom_point(data = out, aes(x = freq, y = prob, al
   geom_ribbon(data = model, aes(x = s, ymin = lower, ymax = upper), alpha = 0.5, fill = palette[1]) +
   scale_alpha_manual(values = c(0, 1)) + theme(legend.position = 'none') +
   xlab("Frequency in Donor") + ylab("Probability Transmitted") +
-  geom_point(data = trans_freq.comp,
-             aes(x = freq1, y = as.numeric(found) + (as.numeric(found) - 0.5)/10), alpha = 0.5)+
+  geom_point(data = trans_freq.comp, aes(x = freq1, y = as.numeric(found) + (as.numeric(found) - 0.5)/10), alpha = 0.5) +
   scale_y_continuous(breaks = seq(0, 1, 0.25))
 window_data.plot
 
@@ -194,7 +193,6 @@ Pt_BetaBin <- function(x, l, max_Nb)
 Pt_BetaBin<-Vectorize(Pt_BetaBin,vectorize.args = "x")
 
 ### Do the optimization
-# // ALV: error here. object Nb not found.
 beta_total_fit <- trans_fit(filter(trans_freq.comp, freq1 < 0.5), Nb_max = 100, model = "BetaBin", threshold = 0.02, acc = accuracy_stringent, pair_id)
 
 zdpois_fit <- dist_prob_wrapper(ddist = "dzpois", params = "lambda")
@@ -204,33 +202,27 @@ trans_freq.comp %>% group_by(pair_id) %>%
   mutate(weight_factor_kk = max(donor_mutants)/donor_mutants,
          weight_factor = 1) -> counts
 
-dzpois_model_fit_bb <- bbmle::mle2(minuslogl = zdpois_fit, start = list(lambda = 1),
-                                 data = list(data = beta_total_fit,
-                                             weight = counts))
+dzpois_model_fit_bb <- bbmle::mle2(minuslogl = zdpois_fit, start = list(lambda = 1), data = list(data = beta_total_fit, weight = counts))
 
 # Characterize the model fit
 conf_int_BB <- bbmle::confint(dzpois_model_fit_bb)
 summary(dzpois_model_fit_bb)
 AIC(dzpois_model_fit_bb)
 
-### Plot // ALV: need to modify
+### Plot 
 
 model_betaBin <- tibble(s = seq(0,1,0.01))
-model_betaBin %>% rowwise() %>%
-  mutate(prob = Pt_BetaBin(s,dzpois_model_fit_bb@coef,100),
-         lower = Pt_BetaBin(s,conf_int_BB[1],100),
-         upper = Pt_BetaBin(s,conf_int_BB[2],100)) -> model_betaBin
+#model_betaBin %>% rowwise() %>% mutate(prob = Pt_BetaBin(s,dzpois_model_fit_bb@coef,100), lower = Pt_BetaBin(s,conf_int_BB[1],100), upper = Pt_BetaBin(s,conf_int_BB[2],100)) -> model_betaBin
+model_betaBin %>% rowwise() %>% mutate(prob = Pt_BetaBin(s,dzpois_model_fit_bb@coef,100)) -> model_betaBin
 
-model_betaBin %>% rowwise() %>%
-  mutate(prob = Pt_BetaBin(s,dzpois_model_fit_bb@coef,100)) -> model_betaBin
-
-window_data_bb.p<-ggplot()+geom_point(data = out,aes(x=freq,y=prob,alpha=many))+
-  geom_errorbar(data=out,aes(x=freq,ymin=error_bottom,ymax=error_top,alpha=many))+
-  geom_line(data=model_betaBin,aes(x=s,y=prob),color=palette[5])+
-  #geom_ribbon(data=model_betaBin,aes(x=s,ymin=lower,ymax=upper),alpha=0.5,fill=palette[5])+
-  scale_alpha_manual(values=c(0,1))+theme(legend.position = 'none')+
-  xlab("Frequency in Donor")+ylab("Probability of transmission")+
-  geom_point(data=trans_freq.comp,
-             aes(x=freq1,y=as.numeric(found)+(as.numeric(found)-0.5)/10),alpha=0.5)+
+window_data_bb.p <- ggplot() + geom_point(data = out, aes(x = freq, y = prob, alpha = many)) +
+  geom_errorbar(data = out, aes(x = freq, ymin = error_bottom, ymax = error_top, alpha = many)) +
+  geom_line(data = model_betaBin, aes(x = s, y = prob), color = palette[5]) +
+  #geom_ribbon(data = model_betaBin, aes(x = s, ymin = lower, ymax = upper), alpha = 0.5, fill = palette[5]) +
+  scale_alpha_manual(values = c(0,1)) + theme(legend.position = 'none') +
+  xlab("Frequency in Donor") + ylab("Probability of Transmission") +
+  geom_point(data = trans_freq.comp, aes(x = freq1, y = as.numeric(found) + (as.numeric(found)-0.5)/10), alpha = 0.5) +
   scale_y_continuous(breaks = seq(0,1,0.25))
+
+# Summary: For 2% threshold dataset, bottleneck estimation is -27.17 with no confidence interval available.
 
