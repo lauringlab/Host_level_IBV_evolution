@@ -338,12 +338,14 @@ L1norm_plot <- ggplot(L1norm_plot_data, aes(x = L1_norm, fill = as.factor((valid
   scale_fill_manual(name = "", labels = c("Household pair", "Community pair"), values = palette[c(3,4)]) +
   xlab("L1 Norm") + ylab("Normalized Count") +
   theme(legend.position = c(0.5, 0.5)) +
-  geom_segment(aes(x = cutoff, xend = cutoff, y = 0, yend = 1), linetype = 2, color = palette[5], size = 0.3) + theme_classic()
+  geom_segment(aes(x = cutoff, xend = cutoff, y = 0, yend = 1), linetype = 2, color = palette[5], size = 0.3) + theme_classic() +
+  theme(text = element_text(size = 28), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20))
 
 L1norm_plot
 
 ggsave(plot = L1norm_plot, filename = "results/plots/L1norm.jpg", device = "jpeg")
 ggsave(plot = L1norm_plot, filename = "results/plots/L1norm.pdf", device = "pdf")
+ggsave(plot = L1norm_plot, filename = "results/plots/L1norm_square.pdf", device = "pdf", width = 10, height = 10)
 
 # ============================== Number of SNVs per transmission pair sample ===================================
 

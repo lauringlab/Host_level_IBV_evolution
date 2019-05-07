@@ -60,6 +60,9 @@ isnv_by_day.plot <- ggplot(meta_snv, aes(x = as.factor(DPSO), y = iSNV)) + geom_
 ggsave(plot = isnv_by_day.plot, filename = "results/plots/SNVbyDPSO.jpg", device = "jpeg")
 ggsave(plot = isnv_by_day.plot, filename = "results/plots/SNVbyDPSO.pdf", device = "pdf")
 
+isnv_by_day.plot <- isnv_by_day.plot + theme(text = element_text(size = 35), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20))
+ggsave(plot = isnv_by_day.plot, filename = "results/plots/SNVbyDPSO_square.pdf", device = "pdf", width = 10, height = 10)
+
 # =========== Histogram of iSNV counts per sample ================
 
 isnv.per.sample <- ggplot(meta_snv, aes(x = iSNV)) + geom_histogram(binwidth = 1, fill = palette[5], color = "white") + xlab("Number of iSNV (Bin Width = 1)") + ylab("Number of samples") + theme_bw()
@@ -87,6 +90,9 @@ ggsave(plot = cfIAV.plot.identity, filename = "results/plots/SNVperSample_cfIAV_
 ggsave(plot = cfIAV.plot.dodge, filename = "results/plots/SNVperSample_cfIAV_dodge.pdf", device = "pdf")
 ggsave(plot = cfIAV.dotplot, filename = "results/plots/SNVperSample_cfIAV_dotplot.pdf", device = "pdf")
 
+cfIAV.dotplot <- cfIAV.dotplot + theme(text = element_text(size = 35), axis.text.x = element_text(size = 32), axis.text.y = element_text(size = 20))
+ggsave(plot = cfIAV.dotplot, filename = "results/plots/SNVperSample_cfIAV_dotplot_square.pdf", device = "pdf", width = 10, height = 10)
+
 # =========== iSNV counts per sample by genome copy number ================
 
 snv_by_copynum <- ggplot(meta_snv, aes(x = log(genome_copy_per_ul, 10), y = iSNV)) + geom_point(shape = 19) + xlab("Log (base 10) of genome copies/uL") + geom_vline(xintercept = 5, linetype = "dotted", color = palette[5], size = 1.5) + theme_bw()
@@ -94,6 +100,9 @@ snv_by_gc <- lm(data = meta_snv, formula = iSNV ~ log(genome_copy_per_ul, 10))
 summary(snv_by_gc)
 ggsave(plot = snv_by_copynum, filename = "results/plots/SNVbyCopyNumber.jpg", device = "jpeg")
 ggsave(plot = snv_by_copynum, filename = "results/plots/SNVbyCopyNumber.pdf", device = "pdf")
+
+snv_by_copynum <- snv_by_copynum + theme(text = element_text(size = 35), axis.text.x = element_text(size = 25), axis.text.y = element_text(size = 25))
+ggsave(plot = snv_by_copynum, filename = "results/plots/SNVbyCopyNumber_square.pdf", device = "pdf", width = 10, height = 10)
 
 # =========== iSNV counts by vaccination status ================
 
@@ -104,6 +113,9 @@ isnv_by_vaccination <- ggplot(meta_snv, aes(y = iSNV, x = as.factor(vaccination_
 
 ggsave(plot = isnv_by_vaccination, filename = "results/plots/SNVbyVaccinationStatus.jpg", device = "jpeg")
 ggsave(plot = isnv_by_vaccination, filename = "results/plots/SNVbyVaccinationStatus.pdf", device = "pdf")
+
+isnv_by_vaccination <- isnv_by_vaccination + theme(text = element_text(size = 35), axis.text.x = element_text(size = 25), axis.text.y = element_text(size = 25))
+ggsave(plot = isnv_by_vaccination, filename = "results/plots/SNVbyVaccinationStatus_square.pdf", device = "pdf", width = 10, height = 10)
 
 # =========== iSNV across genome segments ================
 

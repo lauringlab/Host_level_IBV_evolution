@@ -285,11 +285,11 @@ write.csv(no_cut_trans_freq.comp, file =  "data/processed/no_cut_transmission_pa
 
 # ================== Plot *donor* SNVs by frequency in recipient vs. donor ===========================
 
-trans_freq.p <- ggplot(trans_freq, aes(x = freq1, y = freq2)) + geom_point() + xlab("Frequency in donor") + ylab("Frequency in recipient") + theme_classic()
-trans_freq.comp.p <- ggplot(trans_freq.comp, aes(x = freq1, y = freq2)) + geom_point() + xlab("Frequency in donor") + ylab("Frequency in recipient") + theme_classic()
+trans_freq.p <- ggplot(trans_freq, aes(x = freq1, y = freq2)) + geom_point() + xlab("Frequency in donor") + ylab("Frequency in recipient") + theme_classic() + theme(text = element_text(size = 35), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20))
+trans_freq.comp.p <- ggplot(trans_freq.comp, aes(x = freq1, y = freq2)) + geom_point() + xlab("Frequency in donor") + ylab("Frequency in recipient") + theme_classic() + theme(text = element_text(size = 35), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20))
 
-no_cut_trans_freq.p <- ggplot(no_cut_trans_freq, aes(x = freq1, y = freq2)) + geom_point() + xlab("Frequency in donor") + ylab("Frequency in recipient") + theme_classic()
-no_cut_trans_freq.comp.p <- ggplot(no_cut_trans_freq.comp, aes(x = freq1, y = freq2)) + geom_point() + xlab("Frequency in donor") + ylab("Frequency in recipient") + theme_classic()
+no_cut_trans_freq.p <- ggplot(no_cut_trans_freq, aes(x = freq1, y = freq2)) + geom_point() + xlab("Frequency in donor") + ylab("Frequency in recipient") + theme_classic() + theme(text = element_text(size = 35), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20))
+no_cut_trans_freq.comp.p <- ggplot(no_cut_trans_freq.comp, aes(x = freq1, y = freq2)) + geom_point() + xlab("Frequency in donor") + ylab("Frequency in recipient") + theme_classic() + theme(text = element_text(size = 35), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20))
 
 ggsave(plot = trans_freq.p, filename = "results/plots/RecipientVsDonorAll.jpg", device = "jpeg")
 ggsave(plot = trans_freq.comp.p, filename = "results/plots/RecipientVsDonor_DonorPolymorphic.jpg", device = "jpeg")
@@ -300,3 +300,8 @@ ggsave(plot = trans_freq.p, filename = "results/plots/RecipientVsDonorAll.pdf", 
 ggsave(plot = trans_freq.comp.p, filename = "results/plots/RecipientVsDonor_DonorPolymorphic.pdf", device = "pdf")
 ggsave(plot = no_cut_trans_freq.p, filename = "results/plots/RecipientVsDonorAll_NoCutoff.pdf", device = "pdf")
 ggsave(plot = no_cut_trans_freq.comp.p, filename = "results/plots/RecipientVsDonor_DonorPolymorphic_NoCutoff.pdf", device = "pdf")
+
+ggsave(plot = trans_freq.p, filename = "results/plots/RecipientVsDonorAll_square.pdf", device = "pdf", width = 10, height = 10)
+ggsave(plot = trans_freq.comp.p, filename = "results/plots/RecipientVsDonor_DonorPolymorphic_square.pdf", device = "pdf", width = 10, height = 10)
+ggsave(plot = no_cut_trans_freq.p, filename = "results/plots/RecipientVsDonorAll_NoCutoff_square.pdf", device = "pdf", width = 10, height = 10)
+ggsave(plot = no_cut_trans_freq.comp.p, filename = "results/plots/RecipientVsDonor_DonorPolymorphic_NoCutoff_square.pdf", device = "pdf", width = 10, height = 10)

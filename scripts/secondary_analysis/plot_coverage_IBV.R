@@ -87,7 +87,8 @@ cov_plot <- function(cov.df, title)
   
   cov.plot <- cov.plot + ggtitle(title) + ylab("Read depth") + scale_x_discrete(labels = x.labels$chr, breaks = x.labels$concat.pos) + xlab("Concatenated Genome Position")
   cov.plot <- cov.plot + theme(axis.title.y = element_text(vjust=1.2))
-  cov.plot <- cov.plot + theme(legend.position = "none")  
+  cov.plot <- cov.plot + theme(legend.position = "none")
+  cov.plot <- cov.plot + theme(text = element_text(size = 35), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20))
   return(cov.plot)
 }
 
@@ -104,6 +105,5 @@ ggsave(filename = "results/plots/YAM_coverage_plot.jpg", plot = yam.coverage.plo
 ggsave(filename = "results/plots/VIC_coverage_plot.pdf", plot = vic.coverage.plot, device = "pdf", width = 10)
 ggsave(filename = "results/plots/YAM_coverage_plot.pdf", plot = yam.coverage.plot, device = "pdf", width = 10)
 
-
-
-
+cov_plot(vic.cov, title = "") -> vic.coverage.plot.square
+ggsave(filename = "results/plots/VIC_coverage_plot_square.pdf", plot = vic.coverage.plot.square, device = "pdf", width = 10, height = 10)
