@@ -87,7 +87,7 @@ cov_plot <- function(cov.df, title)
   
   cov.plot <- cov.plot + ggtitle(title) + ylab("Read depth") + scale_x_discrete(labels = x.labels$chr, breaks = x.labels$concat.pos) + xlab("Concatenated Genome Position")
   cov.plot <- cov.plot + theme(axis.title.y = element_text(vjust=1.2))
-  cov.plot <- cov.plot + theme(legend.position = "none")
+  cov.plot <- cov.plot + theme(legend.position = "none") + theme_classic()
   cov.plot <- cov.plot + theme(text = element_text(size = 35), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20))
   return(cov.plot)
 }

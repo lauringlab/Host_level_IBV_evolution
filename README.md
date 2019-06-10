@@ -26,19 +26,9 @@ This repository holds code for the data analysis and relies heavily on our other
   --------
 # Dependencies    
 
-The analysis expects the variant_pipeline repository to be your home directory. See the tutorial in the variant_pipeline repository for setup. 
+
+The analysis requires the helper repository, variant_pipeline for the primary analysis of variant identification. For the secondary analysis involved in the paper, the R and python scripts are available in this repository. 
 
 # Reproducing the analysis
 
-Reproducing the analysis involves 4 steps:
-
-1) Downloading the fastq files from the SRA 
-2) Primary analysis - Calling iSNV in each sample using the variant_pipeline repository referenced above
-3) Secondary analysis - maniputating the data and running the models 
-4) Making the figures
-
-All the intermediate files needed to run the secondary analysis are included in this repository. The Makefile can be used to run the secondary analysis. 
-
-Due to space limitations, the raw fastq files and intermediate bam files are not included here but can be remade using the commands below.
-
-Please note that in many places we refer to the genomic segment "NA" as "NR". This is to avoid complications in R as "NA" is a special term. 
+For Adam as we go through the analysis (will be changed for publication!):

@@ -1,0 +1,58 @@
+#!/bin/sh
+#PBS -S /bin/sh
+#PBS -A alauring_fluxm
+#PBS -N pipeline_setup
+#PBS -q fluxm
+#PBS -M avalesan@umich.edu
+#PBS -m abe
+#PBS -j oe
+#PBS -V
+#PBS -l nodes=1:ppn=2,mem=280gb,walltime=2:00:00
+
+echo Running job name $PBS_JOBNAME with ID $PBS_JOBID on host $PBS_O_HOST;
+echo Working directory is $PBS_O_WORKDIR
+echo Start time: `date`;
+
+
+cd $PBS_O_WORKDIR
+
+# rename plasmid control fastq files and create directories for VIC and YAM calling for each one
+# deepSNV will fail if it tries to variant call plasmid control 2 as a sample versus plasmid control 1
+
+mv Run_2445/data/fastq_renamed/114267.1.1.fastq Run_2445/data/fastq_renamed/VIC_PC11.1.1.fastq
+mv Run_2445/data/fastq_renamed/114267.2.1.fastq Run_2445/data/fastq_renamed/VIC_PC11.2.1.fastq
+mv Run_2445/data/fastq_renamed/114268.1.1.fastq Run_2445/data/fastq_renamed/VIC_PC21.1.1.fastq
+mv Run_2445/data/fastq_renamed/114268.2.1.fastq Run_2445/data/fastq_renamed/VIC_PC21.2.1.fastq
+mv Run_2445/data/fastq_renamed/114269.1.1.fastq Run_2445/data/fastq_renamed/YAM_PC11.1.1.fastq
+mv Run_2445/data/fastq_renamed/114269.2.1.fastq Run_2445/data/fastq_renamed/YAM_PC11.2.1.fastq
+mv Run_2445/data/fastq_renamed/114270.1.1.fastq Run_2445/data/fastq_renamed/YAM_PC21.1.1.fastq
+mv Run_2445/data/fastq_renamed/114270.2.1.fastq Run_2445/data/fastq_renamed/YAM_PC21.2.1.fastq
+
+mv Run_2446/data/fastq_renamed/114272.1.1.fastq Run_2446/data/fastq_renamed/YAM_PC22.1.1.fastq
+mv Run_2446/data/fastq_renamed/114272.2.1.fastq Run_2446/data/fastq_renamed/YAM_PC22.2.1.fastq
+mv Run_2446/data/fastq_renamed/114273.1.1.fastq Run_2446/data/fastq_renamed/YAM_PC12.1.1.fastq
+mv Run_2446/data/fastq_renamed/114273.2.1.fastq Run_2446/data/fastq_renamed/YAM_PC12.2.1.fastq
+mv Run_2446/data/fastq_renamed/114274.1.1.fastq Run_2446/data/fastq_renamed/VIC_PC22.1.1.fastq
+mv Run_2446/data/fastq_renamed/114274.2.1.fastq Run_2446/data/fastq_renamed/VIC_PC22.2.1.fastq
+mv Run_2446/data/fastq_renamed/114275.1.1.fastq Run_2446/data/fastq_renamed/VIC_PC12.1.1.fastq
+mv Run_2446/data/fastq_renamed/114275.2.1.fastq Run_2446/data/fastq_renamed/VIC_PC12.2.1.fastq
+
+mkdir Run_2445/data/fastq_forVIC
+mkdir Run_2445/data/fastq_forYAM
+cp Run_2445/data/fastq_renamed/* Run_2445/data/fastq_forVIC/
+cp Run_2445/data/fastq_renamed/* Run_2445/data/fastq_forYAM/
+rm Run_2445/data/fastq_forVIC/VIC_PC21.1.1.fastq
+rm Run_2445/data/fastq_forVIC/VIC_PC21.2.1.fastq
+rm Run_2445/data/fastq_forYAM/YAM_PC21.1.1.fastq
+rm Run_2445/data/fastq_forYAM/YAM_PC21.2.1.fastq
+
+mkdir Run_2446/data/fastq_forVIC
+mkdir Run_2446/data/fastq_forYAM
+cp Run_2446/data/fastq_renamed/* Run_2446/data/fastq_forVIC/
+cp Run_2446/data/fastq_renamed/* Run_2446/data/fastq_forYAM/
+rm Run_2446/data/fastq_forVIC/VIC_PC22.1.1.fastq
+rm Run_2446/data/fastq_forVIC/VIC_PC22.2.1.fastq
+rm Run_2446/data/fastq_forYAM/YAM_PC22.1.1.fastq
+rm Run_2446/data/fastq_forYAM/YAM_PC22.2.1.fastq 
+
+echo Finish time: `date`

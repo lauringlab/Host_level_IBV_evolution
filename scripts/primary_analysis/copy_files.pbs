@@ -1,0 +1,22 @@
+#!/bin/sh
+#PBS -S /bin/sh
+#PBS -A alauring_fluxm
+#PBS -N copy_IBV
+#PBS -q fluxm
+#PBS -M avalesan@umich.edu
+#PBS -m abe
+#PBS -j oe
+#PBS -V
+#PBS -l nodes=1:ppn=2,mem=280gb,walltime=1:00:00
+
+echo Running job name $PBS_JOBNAME with ID $PBS_JOBID on host $PBS_O_HOST;
+echo Working directory is $PBS_O_WORKDIR
+echo Start time: `date`;
+
+
+cd $PBS_O_WORKDIR
+
+cp /nfs/turbo/med-alauring2/raw_data/2018/Run_2445/lauring/*/* ./Run_2445/data/fastq
+cp /nfs/turbo/med-alauring2/raw_data/2018/Run_2446/lauring/*/* ./Run_2446/data/fastq
+
+echo Finish time: `date`

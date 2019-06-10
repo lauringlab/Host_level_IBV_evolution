@@ -1,0 +1,24 @@
+#!/bin/sh
+#PBS -S /bin/sh
+#PBS -A alauring_fluxm
+#PBS -N run_IBV_VIC_2446
+#PBS -q fluxm
+#PBS -M avalesan@umich.edu
+#PBS -m abe
+#PBS -j oe
+#PBS -V
+#PBS -l nodes=1:ppn=2,mem=75gb,walltime=96:00:00
+
+echo Running job name $PBS_JOBNAME with ID $PBS_JOBID on host $PBS_O_HOST;
+echo Working directory is $PBS_O_WORKDIR
+echo Start time: `date`;
+
+
+cd $PBS_O_WORKDIR
+
+#rm -r /home/avalesan/.bpipedb/jobs/
+#python ~/variant_pipeline/bin/variantPipeline.py ~/variant_pipeline/scripts/aligning_pipeline.groovy "./data/fastq_forVIC/*fastq" ./data/aligned_output_VIC ./options_2446_VIC.yaml
+rm -r /home/avalesan/.bpipedb/jobs/
+python ~/variant_pipeline/bin/variantPipeline.py ~/variant_pipeline/scripts/deepsnv_pipeline.groovy "./data/aligned_output_VIC/removed_duplicates/*.bam" ./data/deepSNV_pipeline_VIC/ ./options_2446_VIC.yaml
+
+echo Finish time: `date`
