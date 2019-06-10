@@ -16,8 +16,8 @@ echo Start time: `date`;
 
 cd $PBS_O_WORKDIR
 
-#rm -r /home/avalesan/.bpipedb/jobs/
-#python ~/variant_pipeline/bin/variantPipeline.py ~/variant_pipeline/scripts/aligning_pipeline.groovy "./data/fastq_forVIC/*fastq" ./data/aligned_output_VIC ./options_2445_VIC.yaml
+rm -r /home/avalesan/.bpipedb/jobs/
+python ~/variant_pipeline/bin/variantPipeline.py ~/variant_pipeline/scripts/aligning_pipeline.groovy "./data/fastq_forVIC/*fastq" ./data/aligned_output_VIC ./options_2445_VIC.yaml
 rm -r /home/avalesan/.bpipedb/jobs/
 python ~/variant_pipeline/bin/variantPipeline.py ~/variant_pipeline/scripts/deepsnv_pipeline.groovy "./data/aligned_output_VIC/removed_duplicates/*.bam" ./data/deepSNV_pipeline_VIC/ ./options_2445_VIC.yaml
 
