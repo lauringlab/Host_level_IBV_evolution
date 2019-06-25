@@ -1,27 +1,23 @@
 Order of secondary analysis scripts:
 
-Setup:
-
-WranglingMetadata.R # used to generate some metadata files; not necessary to run again
-
 Intra-Host Analysis:
 
-CombineCoverageCSVs.R
-get_average_coverage.R
-plot_coverage_IBV.R
-CombineVariantCSVs.R
-IBV_processing_snv_correctCollapse.R
-GetAntigenicPositions.py
-SecondaryAnalysisExploration.R
+	CombineCoverageCSVs.R
+	PlotCoverage.R
+	CombineVariantCSVs.R
+	WranglingMetadata.R
+	ProcessSNV.R
+	GetAntigenicPositions.py # not part of final repo?
+	SecondaryAnalysisExploration.R
 
 Transmission Pair Analysis:
 
-ValidateTransmissionPairs.R
-AnalyzeTransmissionPairs.R
-EstimateBottleneck.R # not likely part of final repo
+	ValidateTransmissionPairs.R
+	AnalyzeTransmissionPairs.R
+	EstimateBottleneck.R # not likely part of final repo
 
 Phylogenetic Trees:
 
-RunningFastTree.ipynb
-raxml.pbs
-PlotTree_PutativePairs.R # may need modification to get tree by season
+	RunningFastTree.ipynb
+	raxml.pbs
+	PlotTree.R

@@ -35,3 +35,9 @@ setdiff(unique(yam.all$Id), metadata_VIC$SampleNumber)
 
 all.coverage <- rbind(vic.all, yam.all)
 write_csv(all.coverage, "data/processed/all.coverage.csv")
+
+# ======================== Get average coverage across each sample ================================
+
+all.coverage %>% group_by(Id) %>% summarize(coverage = mean(coverage)) %>% select(Id, coverage) -> cov_by_sample
+
+write.csv(cov_by_sample, "data/processed/average_coverages.csv")

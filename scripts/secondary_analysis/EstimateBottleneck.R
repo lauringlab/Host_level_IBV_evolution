@@ -28,7 +28,7 @@ transmission_freqs_no_cut_poly_in_donor <- read_csv("data/processed/no_cut_trans
 
 ### Select which dataset to use: 2% frequency cutoff or no cutoff
 trans_freq.comp <- transmission_freqs_poly_in_donor
-trans_freq.comp <- transmission_freqs_no_cut_poly_in_donor
+#trans_freq.comp <- transmission_freqs_no_cut_poly_in_donor
 
 ### Run the maximum likelihood optimization.
 pa_total_fit <- trans_fit(trans_freq.comp, Nb_max = 100, model = "PA", threshold = NULL, acc = NULL, pair_id)

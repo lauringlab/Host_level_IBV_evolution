@@ -13,7 +13,7 @@ transmission_pairs <- read_csv("data/processed/transmission_pairs.csv")
 var_qual <- read_csv("data/processed/qual.snv.csv")
 var_no_cut <- read_csv("data/processed/no_freq_cut.qual.snv.csv")
 
-# ================== Get Arranged Data: JT's functions, modified for my metadata set =========================
+# ================== Helper functions =========================
 
 equal_compare <- function(position)
 { 
@@ -44,7 +44,7 @@ equal_compare <- function(position)
     }
     # Do it again if there are no varaints in the second sample.
   } else if(pos_sum_2 == 0)
-  { # there isn't a variant in the second sample. The reference is fixed. also I told you so. (line 196)
+  { # there isn't a variant in the second sample. The reference is fixed.
     x <- which(position$ref == position$var)
     stopifnot(length(x) < 2) # should be 1 or 0
     if(length(x) == 1)
@@ -133,7 +133,7 @@ polish_freq <- function(df, relative, min_freq = 0)
   df <- dplyr::filter(df, UQ(frequency_cut))
   
   # We want polymorphic sites in the given sample. Due to frequency oddities the major allels may not
-  # be exactly 1-min_freq i.e. we don't set any frequencies by hand. minor frequencies are set by deepsnv
+  # be exactly 1-min_freq i.e. we don't set any frequencies by hand. Minor frequencies are set by deepSNV
   # and this includes an estimated error rate. Major frequencies are set by allele counts.
   
   frequency_cut_minor <- rlang::expr(UQ(rel_quo) < 1)
@@ -141,43 +141,13 @@ polish_freq <- function(df, relative, min_freq = 0)
   # How many alleles have frequencies in the choosen sample above the min and below 1 at each loci
   df %>% dplyr::group_by(chr, pos, ALV_ID_1, ALV_ID_2) %>% dplyr::summarize(alleles = length(which(UQ(frequency_cut) & UQ(frequency_cut_minor)))) -> counts
   
-  #View(counts)
-  
   #if(max(counts$alleles > 2)) stop(paste0("More that two alleles found at a position in a sample"))
-  df <- merge(df, counts)
   
+  df <- merge(df, counts)
   return(subset(df, alleles == 2, select = -c(alleles)))
 }
 
-# ================== JT's function: get specimens closest to time of transmission ====================
-
-#' Finding SPECID for transmission pairs
-#'
-#' Identifies the SPECID collected nearest a given date, and on the correct side of
-#' the date when specified. The criteria is
-#'
-#' 1) Sample closest to transmission that are on the "right side" of tranmission
-#' (before transmission for donor if possible)
-#'
-#' 2) Titer is the tie breaker when applicable.
-#'
-#' 3) If no iSNV were found in a donor sample and iSNV==T we take the sample with iSNV present.
-#'
-#' @param meta data frame with meta data con
-#' @param date The estimated trasmission date
-#' @param enrollid The enrollid
-#' @param case c("donor","recipient")
-#' @param iSNV boolan if TRUE then we take the sample that has iSNV if the
-#' "best fit" doesn't. This is the historic use of the function. Recall that we
-#' do not have samples before transmission in many cases anyway.
-#'
-#' @return The SPECID that best fits the critea
-#' @examples
-#'
-#' d<-small_meta$collect[4]+1
-#' get_close(small_meta,d,enrollid = "50001",case = "Donor",iSNV = TRUE)
-#' @export
-
+# ================== Get specimens closest to time of transmission ====================
 
 get_close <- function(meta, date, enrollid, case, iSNV = TRUE)
 {
@@ -192,7 +162,7 @@ get_close <- function(meta, date, enrollid, case, iSNV = TRUE)
     id_snv = dplyr::mutate(id_snv, dtrans = collect_date_master - date)
     
     # For donors we want the largest dtrans possible less than 0 or the smallest
-    # possitive dtrans. For the recipient we want the smallest possitive dtrans.
+    # positive dtrans. For the recipient we want the smallest positive dtrans.
     # It should be impossible for the recipient to have a negative dtrans.
     
     if(all(id_snv$dtrans < 0))
@@ -204,7 +174,7 @@ get_close <- function(meta, date, enrollid, case, iSNV = TRUE)
     {
       # There is 1 or no dtrans less than 0 so this puts the sample with the
       # lowest dtrans (either the negative 1 or the smallest positive 1) on top.
-      # titer is the tie braker
+      # Titer is the tie breaker.
       id_snv = id_snv[order(id_snv$dtrans, -id_snv$genome_copy_per_ul, decreasing = FALSE),]
     }
     if(id_snv$iSNV[1] == 0 & id_snv$iSNV[2] > 0 & iSNV == TRUE)
@@ -232,7 +202,6 @@ get_close <- function(meta, date, enrollid, case, iSNV = TRUE)
   }
 }
 
-
 # ================== Arrange data ===========================
 
 useful_transmission_pairs <- filter(transmission_pairs, valid == TRUE & quality_distance == TRUE)
@@ -251,8 +220,7 @@ minority.count <- plyr::ddply(var_qual_minority, ~ALV_ID, summarize, iSNV = leng
 meta_long <- left_join(meta_long, minority.count)
 meta_long$iSNV[is.na(meta_long$iSNV)] <- 0 # No variants in these samples
 
-# Now get the samples. (There was a problem again with rowwise(). Use a sapply method.
-#useful_transmission_pairs_withDual %>% rowwise() %>% mutate(ALV_ID_1 = get_close(meta_long, transmission, ENROLLID1, "donor"), ALV_ID_2 = get_close(meta_long, transmission, ENROLLID2, "recipient")) -> useful_transmission_pairs_withDual
+# Now get the samples.
 FUN <- function(df, id)
 {
   get_close(meta_long, df$transmission, id, "donor")
@@ -267,23 +235,23 @@ useful_transmission_pairs_withDual <- filter(useful_transmission_pairs_withDual,
 
 ### Now get the variants.
 trans_freq <- plyr::adply(useful_transmission_pairs_withDual, 1, function(x) {get_freqs(c(x$ALV_ID_1, x$ALV_ID_2), var_qual)})
-write.csv(trans_freq, file = "data/processed/trans_freq.csv")
+#write.csv(trans_freq, file = "data/processed/trans_freq.csv")
 
 # Reduce to sites that are polymorphic in the donor.
 trans_freq.comp <- polish_freq(trans_freq, freq1, 0.02)
 trans_freq.comp$found <- trans_freq.comp$freq2 > 0.02 # Was it found in the second sample?
-write.csv(trans_freq.comp, file = "data/processed/transmission_pairs_freq.poly_donor.csv")
+#write.csv(trans_freq.comp, file = "data/processed/transmission_pairs_freq.poly_donor.csv")
 
 no_cut_trans_freq <- plyr::adply(useful_transmission_pairs_withDual, 1, function(x){get_freqs(c(x$ALV_ID_1, x$ALV_ID_2), var_no_cut)})
-write.csv(no_cut_trans_freq, file = "data/processed/no_cut_trans_freq.csv")
+#write.csv(no_cut_trans_freq, file = "data/processed/no_cut_trans_freq.csv")
 
 # Reduce to sites that are polymorphic in the donor.
 no_cut_trans_freq.comp <- polish_freq(no_cut_trans_freq, freq1, 0)
 no_cut_trans_freq.comp$found <- no_cut_trans_freq.comp$freq2 > 0 # Was it found in the second sample?
-write.csv(no_cut_trans_freq.comp, file =  "data/processed/no_cut_transmission_pairs_freq.poly_donor.csv")
+#write.csv(no_cut_trans_freq.comp, file =  "data/processed/no_cut_transmission_pairs_freq.poly_donor.csv")
 
 
-# ================== Plot *donor* SNVs by frequency in recipient vs. donor ===========================
+# ================== Plot SNVs by frequency in recipient vs. donor ===========================
 
 trans_freq.p <- ggplot(trans_freq, aes(x = freq1, y = freq2)) + geom_point() + xlab("Frequency in donor") + ylab("Frequency in recipient") + theme_classic() + theme(text = element_text(size = 35), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20))
 trans_freq.comp.p <- ggplot(trans_freq.comp, aes(x = freq1, y = freq2)) + geom_point() + xlab("Frequency in donor") + ylab("Frequency in recipient") + theme_classic() + theme(text = element_text(size = 35), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20))
@@ -291,15 +259,15 @@ trans_freq.comp.p <- ggplot(trans_freq.comp, aes(x = freq1, y = freq2)) + geom_p
 no_cut_trans_freq.p <- ggplot(no_cut_trans_freq, aes(x = freq1, y = freq2)) + geom_point() + xlab("Frequency in donor") + ylab("Frequency in recipient") + theme_classic() + theme(text = element_text(size = 35), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20))
 no_cut_trans_freq.comp.p <- ggplot(no_cut_trans_freq.comp, aes(x = freq1, y = freq2)) + geom_point() + xlab("Frequency in donor") + ylab("Frequency in recipient") + theme_classic() + theme(text = element_text(size = 35), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20))
 
-ggsave(plot = trans_freq.p, filename = "results/plots/RecipientVsDonorAll.jpg", device = "jpeg")
-ggsave(plot = trans_freq.comp.p, filename = "results/plots/RecipientVsDonor_DonorPolymorphic.jpg", device = "jpeg")
-ggsave(plot = no_cut_trans_freq.p, filename = "results/plots/RecipientVsDonorAll_NoCutoff.jpg", device = "jpeg")
-ggsave(plot = no_cut_trans_freq.comp.p, filename = "results/plots/RecipientVsDonor_DonorPolymorphic_NoCutoff.jpg", device = "jpeg")
+#ggsave(plot = trans_freq.p, filename = "results/plots/RecipientVsDonorAll.jpg", device = "jpeg")
+#ggsave(plot = trans_freq.comp.p, filename = "results/plots/RecipientVsDonor_DonorPolymorphic.jpg", device = "jpeg")
+#ggsave(plot = no_cut_trans_freq.p, filename = "results/plots/RecipientVsDonorAll_NoCutoff.jpg", device = "jpeg")
+#ggsave(plot = no_cut_trans_freq.comp.p, filename = "results/plots/RecipientVsDonor_DonorPolymorphic_NoCutoff.jpg", device = "jpeg")
 
-ggsave(plot = trans_freq.p, filename = "results/plots/RecipientVsDonorAll.pdf", device = "pdf")
-ggsave(plot = trans_freq.comp.p, filename = "results/plots/RecipientVsDonor_DonorPolymorphic.pdf", device = "pdf")
-ggsave(plot = no_cut_trans_freq.p, filename = "results/plots/RecipientVsDonorAll_NoCutoff.pdf", device = "pdf")
-ggsave(plot = no_cut_trans_freq.comp.p, filename = "results/plots/RecipientVsDonor_DonorPolymorphic_NoCutoff.pdf", device = "pdf")
+#ggsave(plot = trans_freq.p, filename = "results/plots/RecipientVsDonorAll.pdf", device = "pdf")
+#ggsave(plot = trans_freq.comp.p, filename = "results/plots/RecipientVsDonor_DonorPolymorphic.pdf", device = "pdf")
+#ggsave(plot = no_cut_trans_freq.p, filename = "results/plots/RecipientVsDonorAll_NoCutoff.pdf", device = "pdf")
+#ggsave(plot = no_cut_trans_freq.comp.p, filename = "results/plots/RecipientVsDonor_DonorPolymorphic_NoCutoff.pdf", device = "pdf")
 
 ggsave(plot = trans_freq.p, filename = "results/plots/RecipientVsDonorAll_square.pdf", device = "pdf", width = 10, height = 10)
 ggsave(plot = trans_freq.comp.p, filename = "results/plots/RecipientVsDonor_DonorPolymorphic_square.pdf", device = "pdf", width = 10, height = 10)

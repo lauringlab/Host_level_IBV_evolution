@@ -5,7 +5,6 @@
 # ============================= Import packages ================================
 
 library(tidyverse)
-library(magrittr)
 
 # ============================= Metadata wrangling ================================
 

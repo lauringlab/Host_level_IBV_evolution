@@ -5,7 +5,6 @@
 # ================== Read in data, import packages =========================
 
 library(tidyverse)
-library(magrittr)
 
 meta_long <- read_csv("data/metadata/flu_b_2010_2017_v4LONG_withSeqInfo_gc.csv")
 qual <- read_csv("data/processed/qual.snv.csv")
@@ -26,9 +25,9 @@ meta_wide <- mutate(meta_wide, haveQualityClinicSample = ifelse(clinic_onset %in
 
 meta_wide_seqd <- filter(meta_wide, haveQualityHomeSample == TRUE | haveQualityClinicSample == TRUE) # Have a home and/or clinic sample with quality sequence
 meta_wide_seqd <- mutate(meta_wide_seqd, ID_onset = paste0(ENROLLID, "_", onset)) # these are individual infections for which we have some sequence data
-write_csv(meta_wide_seqd, "data/metadata/metadata_wide_quality_sequence.csv")
+#write_csv(meta_wide_seqd, "data/metadata/metadata_wide_quality_sequence.csv")
 
-# ================== Get L1-norm: JT's functions, modified for my metadata set =========================
+# ================== Functions for L1-norm =========================
 
 equal_compare <- function(position)
 { 
@@ -57,16 +56,16 @@ equal_compare <- function(position)
       extra <- dplyr::mutate(position, var = ref, mutation = paste0(chr, "_", ref, pos, var), freq1 = 1, freq2 = 0) # adding a line with the reference base fixed in sample 1 but not sample 2
       position <- rbind(position, extra)
     }
-    # Do it again if there are no varaints in the second sample.
+    # Do it again if there are no variants in the second sample.
   } else if(pos_sum_2 == 0)
-  { # there isn't a variant in the second sample. The reference is fixed. also I told you so. (line 196)
+  { # there isn't a variant in the second sample. The reference is fixed.
     x <- which(position$ref == position$var)
     stopifnot(length(x) < 2) # should be 1 or 0
     if(length(x) == 1)
-    { # The reference has been infered in the first sample but there are no varaints in the second so it was not infered
+    { # The reference has been inferred in the first sample but there are no variants in the second so it was not inferred
       position$freq2[x] <- 1
     } else if(length(x) == 0)
-    { # the reference was not infered in the first sample and no variants here. Add the reference now
+    { # the reference was not inferred in the first sample and no variants here. Add the reference now
       extra <- dplyr::mutate(position, var = ref, mutation = paste0(chr, "_", ref, pos, var), freq1 = 0, freq2 = 1) # adding a line with the reference base fixed in sample 2 but not sample 1
       position <- rbind(position, extra)
     }
@@ -83,23 +82,20 @@ equal_compare <- function(position)
 
 get_freqs <- function(pairs, snv)
 {
-  # take in a data frame of pairs of Ids. Only 1 pair,
-  # and a list of snv calls. and output the comparison between the 2.
-  # each iSNV and its frequency in both samples
   snv <- subset(snv, ALV_ID %in% pairs, select = c(ALV_ID, mutation, chr, pos, ref, var, freq.var, season, pcr_result))
   
   # just need the snv in the samples we're looking at.
   if(nrow(snv) > 0)
   { # There are mutations.
-    # We only compare samples from the same season and strain so in each case the reference base in the same
+    # We only compare samples from the same season and strain so in each case the reference base is the same.
     stopifnot(length(unique(snv$season)) == 1, length(unique(snv$pcr_result)) == 1)
     
     mut_table <- tidyr::spread(snv, ALV_ID, freq.var, fill = 0) # a data frame with mutation down the first row and then frequency in either sample in the next 2.
     
     mut_table$ALV_ID1 <- pairs[1] # add column with first sample ID
     mut_table$ALV_ID2 <- pairs[2] # add column with second sample ID
-    names(mut_table)[which(names(mut_table) == as.character(pairs[1]))] <-'freq1' # rename this column as the frequency in the first sample
-    names(mut_table)[which(names(mut_table) == as.character(pairs[2]))] <-'freq2' # dido
+    names(mut_table)[which(names(mut_table) == as.character(pairs[1]))] <-'freq1'
+    names(mut_table)[which(names(mut_table) == as.character(pairs[2]))] <-'freq2'
     
     # This function can only be run on samples that qualified for variant identification.
     # If no variants were found in the sample then the SPECID will be missing from mut_table column and so
@@ -140,11 +136,10 @@ dist_tp <- function(pairs, snv)
 {
   data.df <- get_freqs(pairs = pairs, snv = snv)
   
-  if(nrow(data.df) == 0)
+  if(nrow(data.df) == 0) # This is the case when there are no variants found in either sample
   {
-    # This is the case when there are no variants found in either sample
     d = 0
-  }else
+  } else
   {
     y <- as.matrix(cbind(data.df$freq1, data.df$freq2))
     d = dist(t(y), method = "manhattan")
@@ -286,11 +281,15 @@ all_possible_pairs <- mutate(all_possible_pairs,
 all_possible_pairs <- subset(all_possible_pairs, ALV_ID_1 != ALV_ID_2) # remove self-comparisons
 all_possible_pairs <- subset(all_possible_pairs, time_onset >= 0) # only those with ALV_ID_2 sick later than or equal to ALV_ID_1
 
-write.csv(all_possible_pairs, file = "data/processed/all_possible_pairs.csv")
+#write.csv(all_possible_pairs, file = "data/processed/all_possible_pairs.csv")
 
 # ================== Use JT's code for distance calculation =========================
 
-possible_pairs.dist <- plyr::adply(all_possible_pairs, 1, summarize, L1_norm = dist_tp(c(ALV_ID_1, ALV_ID_2), snv = qual))
+### Remove the mixed infection ENROLLID, if they are present.
+mixed <- c("50425")
+all_possible_pairs_nomixed <- filter(all_possible_pairs, !(ENROLLID1 %in% mixed) & !(ENROLLID2 %in% mixed))
+
+possible_pairs.dist <- plyr::adply(all_possible_pairs_nomixed, 1, summarize, L1_norm = dist_tp(c(ALV_ID_1, ALV_ID_2), snv = qual))
 
 ggplot(possible_pairs.dist, aes(L1_norm)) + geom_histogram(binwidth = 1) # a quick view.
 
@@ -302,11 +301,11 @@ possible_pairs.dist <- mutate(possible_pairs.dist,
                             HOUSE_ID2 = meta_wide_unique$HOUSE_ID[match(x = ALV_ID_2, meta_wide_unique$sampleForDistanceAnalysis)],
                             Household = HOUSE_ID1==HOUSE_ID2) 
 
-# Get putative transmission pairs, JT's method
-all_pairs.tp <- get_tp(meta_wide_unique, interval = 7)
+# Get putative transmission pairs
+all_pairs.tp <- get_tp(meta_wide_unique, interval = 7) # Within 7 days of each other
 all_pairs.tp$pair_id <- 1:nrow(all_pairs.tp)
 all_pairs.tp <- ungroup(all_pairs.tp)
-valid_pairs <- filter(all_pairs.tp, valid == TRUE) # Here we get 16, same as my results
+valid_pairs <- filter(all_pairs.tp, valid == TRUE) # Here we get 16
 valid_pairs <- mutate(valid_pairs, same_onset_day = ifelse(onset1 == onset2, TRUE, FALSE))
 possible_pairs.dist <- left_join(possible_pairs.dist, select(valid_pairs, season, pcr_result, ENROLLID1, ENROLLID2, valid))
 possible_pairs.dist$valid[is.na(possible_pairs.dist$valid)] <- FALSE
@@ -338,14 +337,14 @@ L1norm_plot <- ggplot(L1norm_plot_data, aes(x = L1_norm, fill = as.factor((valid
   scale_fill_manual(name = "", labels = c("Household pair", "Community pair"), values = palette[c(3,4)]) +
   xlab("L1 Norm") + ylab("Normalized Count") +
   theme(legend.position = c(0.5, 0.5)) +
-  geom_segment(aes(x = cutoff, xend = cutoff, y = 0, yend = 1), linetype = 2, color = palette[5], size = 0.3) + theme_classic() +
+  geom_segment(aes(x = cutoff, xend = cutoff, y = 0, yend = 1), linetype = 2, color = palette[5], size = 0.4) + theme_classic() +
   theme(text = element_text(size = 28), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20))
 
 L1norm_plot
 
-ggsave(plot = L1norm_plot, filename = "results/plots/L1norm.jpg", device = "jpeg")
-ggsave(plot = L1norm_plot, filename = "results/plots/L1norm.pdf", device = "pdf")
-ggsave(plot = L1norm_plot, filename = "results/plots/L1norm_square.pdf", device = "pdf", width = 10, height = 10)
+#ggsave(plot = L1norm_plot, filename = "results/plots/L1norm.jpg", device = "jpeg")
+#ggsave(plot = L1norm_plot, filename = "results/plots/L1norm.pdf", device = "pdf")
+ggsave(plot = L1norm_plot, filename = "results/plots/L1norm_square.pdf", device = "pdf", width = 15, height = 10)
 
 # ============================== Number of SNVs per transmission pair sample ===================================
 
