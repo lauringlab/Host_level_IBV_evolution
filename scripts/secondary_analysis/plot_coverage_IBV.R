@@ -44,7 +44,6 @@ YAM_IDs <- filter(metadata, final_result == "B_YAM")
 vic.cov <- filter(vic.cov, Id %in% VIC_IDs$SampleNumber)
 yam.cov <- filter(yam.cov, Id %in% YAM_IDs$SampleNumber)
 
-
 # --------------------------------- Functions --------------------------------
 #   Read in the csv files used in the data analysis below
 # -----------------------------------------------------------------------------
@@ -96,6 +95,9 @@ cov_plot <- function(cov.df, title)
 # change chr names for NA_ and NA_clone1 to NR here.
 vic.cov <- mutate(vic.cov, chr = gsub("NA_", "NR", chr))
 yam.cov <- mutate(yam.cov, chr = gsub("NA_clone1", "NR", chr))
+
+all.cov <- rbind(vic.cov, yam.cov)
+cov_plot(all.cov, title = "") -> coverage.plot
 
 cov_plot(vic.cov, title = "Coverage on VIC Reference") -> vic.coverage.plot
 cov_plot(yam.cov, title = "Coverage on YAM Reference") -> yam.coverage.plot

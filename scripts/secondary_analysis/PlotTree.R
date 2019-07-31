@@ -9,7 +9,8 @@ library(wesanderson)
 library(ggtree)
 
 meta_long <- read_csv("data/metadata/flu_b_2010_2017_v4LONG_withSeqInfo_gc.csv")
-tree <- read.tree("data/processed/RAxML_bestTree.IBV_raxml_PairAnalysis.tree")
+tree <- read.tree("data/processed/RAxML_bestTree.IBV_VIC_aln_tree.fa")
+tree <- read.tree("data/processed/RAxML_bestTree.IBV_YAM_aln_tree.fa")
 
 # ======================== Some metadata wrangling ==========================
 
@@ -29,9 +30,10 @@ for(r in 1:nrow(meta_long))
 
 raxml_tree <- ggtree(tree) + geom_treescale()
 #raxml_tree <- raxml_tree %<+% meta_long + geom_tiplab(aes(color = factor(pairs_house_id)), size = 3) + scale_color_manual(values = palette)
-raxml_tree <- raxml_tree %<+% meta_long + geom_tiplab(aes(color = factor(season)), size = 2)
+raxml_tree <- raxml_tree %<+% meta_long + geom_tiplab(aes(color = factor(season)), size = 0.5)
+raxml_tree
 
-raxml_tree <- raxml_tree + theme(legend.position = "bottom", legend.text = element_text(size = 11)) + labs(color = "Season")
+raxml_tree <- raxml_tree + theme(legend.position = "bottom", legend.text = element_text(size = 11)) + labs(color = "Household ID")
 raxml_tree <- raxml_tree + guides(colour = guide_legend(override.aes = list(size = 7, shape = 16, alpha = 1)))
 raxml_tree
 

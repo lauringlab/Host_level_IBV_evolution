@@ -58,7 +58,7 @@ meta_snv$syn_snv[is.na(meta_snv$syn_snv)] <- 0
 write_csv(meta_snv, "data/processed/meta_snv.csv")
 
 isnv_by_day.plot <- ggplot(meta_snv, aes(x = as.factor(DPSO), y = iSNV)) + geom_boxplot(outlier.shape = NA, notch = FALSE) + xlab("Day Post Symptom Onset") + 
-  geom_jitter(width = 0.3, height = 0.1, size = 2.5) + theme_bw() + ylab("iSNV Per Sample")
+  geom_jitter(width = 0.3, height = 0.1, size = 3.5) + theme_bw() + ylab("iSNV Per Sample")
 ggsave(plot = isnv_by_day.plot, filename = "results/plots/SNVbyDPSO.jpg", device = "jpeg")
 ggsave(plot = isnv_by_day.plot, filename = "results/plots/SNVbyDPSO.pdf", device = "pdf")
 
@@ -82,7 +82,7 @@ cfIAV.plot.identity <- ggplot(cfIAV_data, aes(x = iSNV, fill = type)) + geom_his
 cfIAV.plot.dodge <- ggplot(cfIAV_data, aes(x = iSNV, fill = type)) + geom_histogram(binwidth = 1, alpha = 1, color = "white", position = "dodge") + scale_fill_manual(name = "Type", values = c(palette[3], palette[5])) + xlab("Number of iSNV") + ylab("Number of samples") + theme_bw()
 
 cfIAV.dotplot <- ggplot(cfIAV_data, aes(y = iSNV, x = as.factor(type), fill = type, color = type)) +
-  geom_dotplot(stackdir = "center", binaxis = 'y', binwidth = 1, dotsize = 0.4) + scale_fill_manual(values = c(palette[3], palette[5])) + scale_color_manual(values = c(palette[3], palette[5])) +
+  geom_dotplot(stackdir = "center", binaxis = 'y', binwidth = 1, dotsize = 0.4) + scale_fill_manual(values = c("black", palette[5])) + scale_color_manual(values = c("black", palette[5])) +
   #stat_summary(fun.data = "plot.median", geom = "errorbar", colour = "red", width = 0.95, size = 0.3) +
   xlab("") + ylab("iSNV Per Sample") + theme_bw() + theme(legend.position = "")
 
@@ -93,11 +93,29 @@ ggsave(plot = cfIAV.plot.dodge, filename = "results/plots/SNVperSample_cfIAV_dod
 ggsave(plot = cfIAV.dotplot, filename = "results/plots/SNVperSample_cfIAV_dotplot.pdf", device = "pdf")
 
 cfIAV.dotplot <- cfIAV.dotplot + theme(text = element_text(size = 35), axis.text.x = element_text(size = 32), axis.text.y = element_text(size = 28))
-ggsave(plot = cfIAV.dotplot, filename = "results/plots/SNVperSample_cfIAV_dotplot_square.pdf", device = "pdf", width = 10, height = 10)
+ggsave(plot = cfIAV.dotplot, filename = "results/plots/SNVperSample_cfIAV_dotplot_square.pdf", device = "pdf", width = 4, height = 4)
+
+# =========== iSNV frequency by genome position ================
+
+positions <- read_csv("./data/processed/FluSegmentPositions.csv") # lengths from reference files
+positions_YAM <- filter(positions, Lineage == "B/YAM")
+
+isnv_minority_nomixed_concatpos <- mutate(isnv_minority_nomixed, concat_pos = positions$AddLength[match(chr, positions$Segment)] + pos)
+
+freq.by.pos <- ggplot(isnv_minority_nomixed_concatpos, aes(x = concat_pos, y = freq.var, fill = class_factor)) +
+  geom_point(size = 3, shape = 21) +
+  scale_color_manual(values = palette[c(3,4)]) +
+  theme_bw() + 
+  xlab("Concatenated Genome Position") + 
+  ylab("Frequency") +
+  theme(legend.position = "none", panel.grid.minor = element_blank()) +
+  scale_x_continuous(labels = positions_YAM$Segment, breaks = positions_YAM$AddLength)
+
+# 10 by 4
 
 # =========== iSNV counts per sample by genome copy number ================
 
-snv_by_copynum <- ggplot(meta_snv, aes(x = log(genome_copy_per_ul, 10), y = iSNV)) + geom_point(shape = 19, size = 3) + 
+snv_by_copynum <- ggplot(meta_snv, aes(x = log(genome_copy_per_ul, 10), y = iSNV)) + geom_point(shape = 19, size = 3.5) + 
   ylab("iSNV Per Sample") + theme_bw() +
   #geom_vline(xintercept = 5, linetype = "dotted", color = palette[5], size = 1.5) +
   xlab(expression(paste("Log (base 10) of genomes/", mu, L)))
@@ -111,17 +129,17 @@ ggsave(plot = snv_by_copynum, filename = "results/plots/SNVbyCopyNumber_square.p
 
 # =========== iSNV counts by vaccination status ================
 
-isnv_by_vaccination <- ggplot(meta_snv, aes(y = iSNV, x = as.factor(vaccination_status), color = as.factor(vaccination_status), fill = as.factor(vaccination_status))) +
-  geom_dotplot(stackdir = "center", binaxis = 'y', binwidth = 1, dotsize = 0.2) +
+isnv_by_vaccination <- ggplot(meta_snv, aes(y = iSNV, x = as.factor(vaccination_status))) +
+  geom_dotplot(stackdir = "center", binaxis = 'y', binwidth = 1, dotsize = 0.25) +
   #stat_summary(fun.data = "plot.median", geom = "errorbar", colour = "red", width = 0.95, size = 0.3) +
-  scale_fill_manual(values = c(palette[5], palette[5])) + scale_color_manual(values = c(palette[5], palette[5])) +
+  #scale_fill_manual(values = c(palette[5], palette[5])) + scale_color_manual(values = c(palette[5], palette[5])) +
   scale_x_discrete(labels = c("Not Vaccinated", "Vaccinated")) + xlab("") + theme_bw() + ylab("iSNV Per Sample") +
   theme(legend.position = "")
 
 #ggsave(plot = isnv_by_vaccination, filename = "results/plots/SNVbyVaccinationStatus.jpg", device = "jpeg")
 #ggsave(plot = isnv_by_vaccination, filename = "results/plots/SNVbyVaccinationStatus.pdf", device = "pdf")
 
-isnv_by_vaccination <- isnv_by_vaccination + theme(text = element_text(size = 35), axis.text.x = element_text(size = 32), axis.text.y = element_text(size = 28))
+isnv_by_vaccination <- isnv_by_vaccination + theme(text = element_text(size = 35), axis.text.x = element_text(size = 32), axis.text.y = element_text(size = 28), axis.title.x = element_text(margin = margin(t = 20)))
 ggsave(plot = isnv_by_vaccination, filename = "results/plots/SNVbyVaccinationStatus_square.pdf", device = "pdf", width = 10, height = 10)
 
 # =========== iSNV across genome segments ================
@@ -167,6 +185,7 @@ genome_location.plot.multiple <- genome_location.plot + geom_point(data = multip
 ggsave(plot = genome_location.plot.multiple, filename = "results/plots/SNVbyGenomeLocation_WithMultiple.pdf", device = "pdf")
 
 # =========== Frequency by Nonsyn/Syn ================
+
 
 freq_histogram <- ggplot(isnv_minority_nomixed, aes(x = freq.var, fill = class_factor)) + geom_histogram(color = "white", binwidth = 0.05, position = "dodge", boundary = 0.02) +
   xlab("Frequency") + ylab("Number of iSNV") +

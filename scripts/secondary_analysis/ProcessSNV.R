@@ -106,7 +106,7 @@ quality_var <- diverse_sites(quality_var, 1, season, pcr_result, pos, chr)
 no_freq_cut <- quality_var
 quality_var %>% filter(freq.var > 0.02) -> quality_var
 
-quality_var_monomorphic <- monomorphic(qual, ALV_ID, season, chr, pos, pcr_result)
+quality_var_monomorphic <- monomorphic(quality_var, ALV_ID, season, chr, pos, pcr_result)
 no_freq_cut_monomorphic <- monomorphic(no_freq_cut, ALV_ID, season, chr, pos, pcr_result)
 
 quality_var_monomorphic <- subset(quality_var_monomorphic, !(ref == var & freq.var == 1))
