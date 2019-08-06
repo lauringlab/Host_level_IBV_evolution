@@ -8,7 +8,7 @@ library(tidyverse)
 
 # ============================= Metadata wrangling ================================
 
-metadata_by_seq <- read_csv("data/metadata/IBV_Sequenced_WithMetadata_InferredTypes.csv")
+metadata_by_seq <- read_csv("data/metadata/IBV_Sequenced_WithMetadata_InferredTypes_v2.csv")
 samples <- data.frame(table(metadata_by_seq$uniqueID))
 samples %>% separate(Var1, c("first", "second", "third")) -> samples_split
 samples <- cbind(samples, samples_split)
@@ -22,7 +22,6 @@ samples <- mutate(samples, SPECID = ifelse(!is_home_sample, second, NA))
 samples <- mutate(samples, home_spec_accn = ifelse(is_home_sample, first, NA))
 
 # Rearranging the file of metadata by sequencing ID
-#metadata_by_seq <- read_csv("../metadata/IBV_Sequenced_WithMetadata_InferredTypes.csv")
 metadata_by_seq <- mutate(metadata_by_seq, home_collected = ifelse(str_detect(uniqueID, "HS"), TRUE, FALSE))
 read_csv("data/processed/average_coverages.csv") %>% select(Id, coverage) %>% rename(SampleNumber = Id) -> cov_sample
 metadata_by_seq <- merge(metadata_by_seq, cov_sample, by = "SampleNumber")
@@ -44,9 +43,6 @@ metadata_v4_long <- mutate(metadata_v4_long, is_home_spec = ifelse(is_home_spec 
 metadata_by_seq[!duplicated(metadata_by_seq[,c("ALV_ID")]),] %>% select(ALV_ID, seq_replicates) -> unique_metadata_by_seq
 metadata_v4_long_seqd <- merge(metadata_v4_long, unique_metadata_by_seq, by = "ALV_ID")
 
-metadata_v4_long <- mutate(metadata_v4_long, sequenced = ifelse(ALV_ID %in% metadata_v4_long_seqd$ALV_ID, TRUE, FALSE))
-write_csv(metadata_v4_long, "data/metadata/flu_b_2010_2017_v4LONG_seqdBinary.csv")
-
 # Add sequencing numbers and coverage values.
 metadata_v4_long_seqd <- mutate(metadata_v4_long_seqd, SeqSampleNumber1 = rep(NA,nrow(metadata_v4_long_seqd)))
 metadata_v4_long_seqd <- mutate(metadata_v4_long_seqd, SeqSampleNumber2 = rep(NA,nrow(metadata_v4_long_seqd)))
@@ -59,13 +55,13 @@ for(r in 1:nrow(metadata_v4_long_seqd))
   reps <- row$seq_replicates
   
   by_seq <- filter(metadata_by_seq, ALV_ID == alv_id)
-  
+
   if(reps == 1)
   {
-    metadata_v4_long_seqd$SeqSampleNumber1[which(as.character(metadata_v4_long_seqd$ALV_ID) == as.character(alv_id))] = by_seq$SampleNumber
-    metadata_v4_long_seqd$SeqSampleNumber2[which(as.character(metadata_v4_long_seqd$ALV_ID) == as.character(alv_id))] = NA
-    metadata_v4_long_seqd$coverage1[which(as.character(metadata_v4_long_seqd$ALV_ID) == as.character(alv_id))] = by_seq$coverage
-    metadata_v4_long_seqd$coverage2[which(as.character(metadata_v4_long_seqd$ALV_ID) == as.character(alv_id))] = NA
+    metadata_v4_long_seqd$SeqSampleNumber1[match(alv_id, metadata_v4_long_seqd$ALV_ID)] <- by_seq$SampleNumber
+    metadata_v4_long_seqd$SeqSampleNumber2[match(alv_id, metadata_v4_long_seqd$ALV_ID)] <- NA
+    metadata_v4_long_seqd$coverage1[match(alv_id, metadata_v4_long_seqd$ALV_ID)] <- by_seq$coverage
+    metadata_v4_long_seqd$coverage2[match(alv_id, metadata_v4_long_seqd$ALV_ID)] <- NA
   }
   else if(reps == 2)
   {
@@ -75,21 +71,26 @@ for(r in 1:nrow(metadata_v4_long_seqd))
     sB <- rowB$SampleNumber
     cA <- rowA$coverage
     cB <- rowB$coverage
-    metadata_v4_long_seqd$SeqSampleNumber1[which(as.character(metadata_v4_long_seqd$ALV_ID) == as.character(alv_id))] = sA
-    metadata_v4_long_seqd$SeqSampleNumber2[which(as.character(metadata_v4_long_seqd$ALV_ID) == as.character(alv_id))] = sB
-    metadata_v4_long_seqd$coverage1[which(as.character(metadata_v4_long_seqd$ALV_ID) == as.character(alv_id))] = cA
-    metadata_v4_long_seqd$coverage2[which(as.character(metadata_v4_long_seqd$ALV_ID) == as.character(alv_id))] = cB
+    metadata_v4_long_seqd$SeqSampleNumber1[match(alv_id, metadata_v4_long_seqd$ALV_ID)] <- sA
+    metadata_v4_long_seqd$SeqSampleNumber2[match(alv_id, metadata_v4_long_seqd$ALV_ID)] <- sB
+    metadata_v4_long_seqd$coverage1[match(alv_id, metadata_v4_long_seqd$ALV_ID)] <- cA
+    metadata_v4_long_seqd$coverage2[match(alv_id, metadata_v4_long_seqd$ALV_ID)] <- cB
   }
-  
 }
 
 metadata_v4_long_seqd <- mutate(metadata_v4_long_seqd, coverage_qualified = ifelse(seq_replicates == 1, ifelse(coverage1 > 1000, TRUE, FALSE), ifelse(coverage1 > 1000 & coverage2 > 1000, TRUE, FALSE)))
+metadata_v4_long_seqd <- mutate(metadata_v4_long_seqd, DPSO = ifelse(!is_home_spec, collect-onset, home_spec_date-onset)) # DPSO = days post symptom onset
+
+# Need to standardize lineage names again.
+
+# Standardize the lineage naming
 metadata_v4_long_seqd$pcr_result[metadata_v4_long_seqd$pcr_result == "B YAM"] <- "B/YAM"
-metadata_v4_long_seqd$pcr_result[metadata_v4_long_seqd$pcr_result == "B"] <- "B/YAM" # the two untyped were Yam, via consensus phylogenetic trees
 metadata_v4_long_seqd$pcr_result[metadata_v4_long_seqd$pcr_result == "B/Yam"] <- "B/YAM"
 metadata_v4_long_seqd$pcr_result[metadata_v4_long_seqd$pcr_result == "B VIC"] <- "B/VIC"
 metadata_v4_long_seqd$pcr_result[metadata_v4_long_seqd$pcr_result == "B/Vic"] <- "B/VIC"
-metadata_v4_long_seqd <- mutate(metadata_v4_long_seqd, DPSO = ifelse(!is_home_spec, collect-onset, home_spec_date-onset)) # DPSO = days post symptom onset
+
+# Two untyped samples, just labeled "B", were found to cluster with YAM sequences on a phylogeny. Add that information here.
+metadata_v4_long_seqd$pcr_result[metadata_v4_long_seqd$pcr_result == "B"] <- "B/YAM"
 
 write_csv(metadata_v4_long_seqd, "data/metadata/flu_b_2010_2017_v4LONG_withSeqInfo.csv")
 write_csv(metadata_by_seq, "data/metadata/Metadata_By_Seq_withALVID.csv")

@@ -16,7 +16,7 @@ metadata_by_seq <- read_csv("data/metadata/Metadata_By_Seq_withALVID.csv")
 quality_var <- read_csv("data/processed/qual.snv.csv")
 no_freq_cut_var <- read_csv("data/processed/no_freq_cut.qual.snv.csv")
 qual_not_coll <- read_csv("data/processed/qual.not.collapsed.snv.csv")
-chrs <- read.csv("data/metadata/ibv.segs.csv", stringsAsFactors = T) # May need to check that this is correct.
+chrs <- read.csv("data/metadata/ibv.segs.csv", stringsAsFactors = TRUE)
 IAV_snv_qual_meta <- read_csv("data/processed/IAV_snv_qual_meta.csv")
 
 plot.median <- function(x) {
@@ -100,11 +100,11 @@ ggsave(plot = cfIAV.dotplot, filename = "results/plots/SNVperSample_cfIAV_dotplo
 positions <- read_csv("./data/processed/FluSegmentPositions.csv") # lengths from reference files
 positions_YAM <- filter(positions, Lineage == "B/YAM")
 
-isnv_minority_nomixed_concatpos <- mutate(isnv_minority_nomixed, concat_pos = positions$AddLength[match(chr, positions$Segment)] + pos)
+isnv_minority_nomixed_concatpos <- mutate(isnv_minority_nomixed, concat_pos = positions_YAM$AddLength[match(chr, positions_YAM$Segment)] + pos)
 
 freq.by.pos <- ggplot(isnv_minority_nomixed_concatpos, aes(x = concat_pos, y = freq.var, fill = class_factor)) +
   geom_point(size = 3, shape = 21) +
-  scale_color_manual(values = palette[c(3,4)]) +
+  scale_fill_manual(values = palette[c(3,4)]) +
   theme_bw() + 
   xlab("Concatenated Genome Position") + 
   ylab("Frequency") +
