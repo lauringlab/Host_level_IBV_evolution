@@ -11,13 +11,7 @@ MasterMetadata <- read_csv("data/metadata/flu_b_2010_2017_v3.csv")
 SequencingIDs <- read_csv("data/metadata/SeqSubmission.csv")
 
 # Re-label misnamed replicates
-SequencingIDs <- mutate(SequencingIDs, SampleName = ifelse(SampleName == "301665_M53896_2010_rep_1", "301665_M53896_2010_rep_2", SampleName)) 
-SequencingIDs <- mutate(SequencingIDs, SampleName = ifelse(SampleName == "320413_MH1033_2011_rep_1", "320413_MH1033_2011_rep_2", SampleName))
-SequencingIDs <- mutate(SequencingIDs, SampleName = ifelse(SampleName == "330007_MH2666_2012_rep_1", "330007_MH2666_2012_rep_2", SampleName))
-SequencingIDs <- mutate(SequencingIDs, SampleName = ifelse(SampleName == "330108_MH4301_2012_rep_1", "330108_MH4301_2012_rep_2", SampleName))
-SequencingIDs <- mutate(SequencingIDs, SampleName = ifelse(SampleName == "331397_MH4247_2012_rep_1", "331397_MH4247_2012_rep_2", SampleName))
-
-SequencingIDs$SampleName[which("301665_M53896_2010_rep_1" == SequencingIDs$SampleName & SequencingIDs$PoolNumber == 114367)] <- "301665_M53896_2010_rep_2" # these five were mis-labeled as rep1.
+SequencingIDs$SampleName[which("301665_M53896_2010_rep_1" == SequencingIDs$SampleName & SequencingIDs$PoolNumber == 114367)] <- "301665_M53896_2010_rep_2" # these five were mis-labeled as rep1, when really they were rep2 on the second run.
 SequencingIDs$SampleName[which("320413_MH1033_2011_rep_1" == SequencingIDs$SampleName & SequencingIDs$PoolNumber == 114367)] <- "320413_MH1033_2011_rep_2"
 SequencingIDs$SampleName[which("330007_MH2666_2012_rep_1" == SequencingIDs$SampleName & SequencingIDs$PoolNumber == 114367)] <- "330007_MH2666_2012_rep_2"
 SequencingIDs$SampleName[which("330108_MH4301_2012_rep_1" == SequencingIDs$SampleName & SequencingIDs$PoolNumber == 114367)] <- "330108_MH4301_2012_rep_2"
