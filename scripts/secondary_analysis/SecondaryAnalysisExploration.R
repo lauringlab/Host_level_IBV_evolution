@@ -65,6 +65,11 @@ ggsave(plot = isnv_by_day.plot, filename = "results/plots/SNVbyDPSO.pdf", device
 isnv_by_day.plot <- isnv_by_day.plot + theme(text = element_text(size = 35), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20))
 ggsave(plot = isnv_by_day.plot, filename = "results/plots/SNVbyDPSO_square.pdf", device = "pdf", width = 10, height = 10)
 
+# ============ Select data for table ==================
+
+isnv_minority_nomixed %>% mutate(coverage = cov.tst.fw + cov.tst.bw) %>% select(ENROLLID, ALV_ID, coverage, chr, mutation, Var_AA, freq.var, class_factor, season, vaccination_status, is_home_spec, genome_copy_per_ul, pcr_result) -> isnv_minority_nomixed_table
+isnv_minority %>% filter(ENROLLID == "50425") %>% mutate(coverage = cov.tst.fw + cov.tst.bw) %>% select(ENROLLID, ALV_ID, coverage, chr, mutation, Var_AA, freq.var, class_factor, season, vaccination_status, is_home_spec, genome_copy_per_ul, pcr_result) -> isnv_minority_mixedinfection_table
+
 # =========== iSNV counts per sample ================
 
 isnv.per.sample <- ggplot(meta_snv, aes(x = iSNV)) + geom_histogram(binwidth = 1, fill = palette[5], color = "white") + xlab("Number of iSNV (Bin Width = 1)") + ylab("Number of samples") + theme_bw()
@@ -94,6 +99,15 @@ ggsave(plot = cfIAV.dotplot, filename = "results/plots/SNVperSample_cfIAV_dotplo
 
 cfIAV.dotplot <- cfIAV.dotplot + theme(text = element_text(size = 35), axis.text.x = element_text(size = 32), axis.text.y = element_text(size = 28))
 ggsave(plot = cfIAV.dotplot, filename = "results/plots/SNVperSample_cfIAV_dotplot_square.pdf", device = "pdf", width = 4, height = 4)
+
+# Yam vs. Vic
+
+Vic_Yam_plot <- ggplot(meta_snv, aes(y = iSNV, x = as.factor(pcr_result))) +
+  geom_dotplot(stackdir = "center", binaxis = 'y', binwidth = 1, dotsize = 0.3) +
+  xlab("") + 
+  ylab("iSNV Per Sample") + 
+  theme_bw() + 
+  theme(legend.position = "")
 
 # =========== iSNV frequency by genome position ================
 
