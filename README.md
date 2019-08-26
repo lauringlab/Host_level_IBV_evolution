@@ -1,4 +1,4 @@
-# Within and between-host evolution of influenza B virus in acute infections
+# Within and between-host diversity of influenza B virus in natural infections
 
 This repository holds code for the data analysis and relies heavily on our other repository [variant_pipeline](https://github.com/lauringlab/variant_pipeline).
 
@@ -21,7 +21,6 @@ This repository holds code for the data analysis and relies heavily on our other
     |  |- figures/     #  final figures
     |  |- plots/     # intermediate plots that may not be included in final figures
     |  |- *ipynb and *py    # Python notebooks used to run a few steps of the analysis - generating trees, etc.
-    +- Makefile        # Executable makefile for this study. Secondary analysis and figure generation.
     
   --------
 # Dependencies    
@@ -31,4 +30,8 @@ The analysis requires the helper repository, variant_pipeline for the primary an
 
 # Reproducing the analysis
 
-For Adam as we go through the analysis (will be changed for publication!):
+Raw sequencing data is available through the NCBI SRA with BioProject PRJNA561158.
+
+After downloading data into an appropriate directory, the primary analysis can be replicated with the commands in IBV_setup.sh.
+
+After downloading the variants, coverage data, and consensus sequences, the secondary analysis can be replicated with the scripts listed in analysis_script_order.txt.
