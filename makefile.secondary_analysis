@@ -1,8 +1,0 @@
-
-# Code order: WranglingMetadata, plot_coverage_IBV, CombineCoverageCSVs, processing_coverage, CombineVariantCSVs, IBV_processing_SNV_correctCollapse, SecondaryExploration, ValidatePairs, AnalyzePairs, EstimateBottleneck, PlotTree_PutativePairs.
-
-./data/processed/all.coverage.csv: ./data/raw/2445_VIC/all.coverage.csv ./data/raw/2445_YAM/all.coverage.csv ./data/raw/2446_VIC/all.coverage.csv ./data/raw/2446_YAM/all.coverage.csv
-	Rscript ./scripts/secondary_analysis/CombineCoverageCSVs.R
-
-./results/plots/YAM_coverage_plot.jpg ./results/plots/VIC_coverage_plot.jpg: ./data/raw/2445_VIC/all.coverage.csv ./data/raw/2445_YAM/all.coverage.csv ./data/raw/2446_VIC/all.coverage.csv ./data/raw/2446_YAM/all.coverage.csv
-	Rscript ./scripts/secondary_analysis/plot_coverage_IBV.R
