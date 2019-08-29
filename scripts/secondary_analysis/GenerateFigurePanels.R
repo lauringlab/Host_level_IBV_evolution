@@ -24,6 +24,7 @@ tree.yam <- read.tree("data/processed/RAxML_bestTree.IBV_YAM_aln_tree.fa")
 possible_pairs.dist <- read.csv("data/processed/possible.pairs.dist.csv")
 trans_freq <- read.csv("data/processed/trans_freq.csv")
 meta_snv <- read.csv("data/processed/meta_snv.csv")
+meta_snv_with_rate_newref <- read.csv("data/processed/meta_snv_withAlignRates.csv")
 
 isnv <- filter(quality_var, freq.var < 0.98)
 isnv_nomixed <- filter(isnv, !(ENROLLID %in% c("50425")))
