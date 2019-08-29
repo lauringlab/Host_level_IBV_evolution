@@ -10,6 +10,7 @@ library(tidyverse)
 variants <- read_csv("data/processed/all.variants.csv")
 meta <- read_csv("data/metadata/flu_b_2010_2017_v4LONG_withSeqInfo_gc.csv")
 
+
 # =========================== Join variant data and metadata ===============================
 
 metadata_by_seq <- read_csv("data/metadata/Metadata_By_Seq_withALVID.csv")

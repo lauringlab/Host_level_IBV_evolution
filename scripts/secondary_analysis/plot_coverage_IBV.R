@@ -87,7 +87,7 @@ cov_plot <- function(cov.df, title)
   cov.plot <- cov.plot + ggtitle(title) + ylab("Read depth") + scale_x_discrete(labels = x.labels$chr, breaks = x.labels$concat.pos) + xlab("Concatenated Genome Position")
   cov.plot <- cov.plot + theme(axis.title.y = element_text(vjust=1.2))
   cov.plot <- cov.plot + theme(legend.position = "none") + theme_classic()
-  cov.plot <- cov.plot + theme(text = element_text(size = 35), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20))
+  #cov.plot <- cov.plot + theme(text = element_text(size = 35), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20))
   return(cov.plot)
 }
 
@@ -96,16 +96,28 @@ cov_plot <- function(cov.df, title)
 vic.cov <- mutate(vic.cov, chr = gsub("NA_", "NR", chr))
 yam.cov <- mutate(yam.cov, chr = gsub("NA_clone1", "NR", chr))
 
+# Combine and reorder so that PB2 is first (PB1 was first in the reference file)
 all.cov <- rbind(vic.cov, yam.cov)
-cov_plot(all.cov, title = "") -> coverage.plot
+pb2.cov <- filter(all.cov, chr == "PB2")
+pb2.pos.max <- max(pb2.cov$chr.pos)
+pb1.cov <- filter(all.cov, chr == "PB1")
+pb1.concat.max <- max(pb1.cov$concat.pos)
+pb2.cov <- mutate(pb2.cov, concat.pos = concat.pos - pb1.concat.max)
+pb1.cov <- mutate(pb1.cov, concat.pos = concat.pos + pb2.pos.max)
+all.cov.rest <- filter(all.cov, chr != "PB2" & chr != "PB1")
+all.cov.reorder <- rbind(pb2.cov, pb1.cov, all.cov.rest)
 
-cov_plot(vic.cov, title = "Coverage on VIC Reference") -> vic.coverage.plot
-cov_plot(yam.cov, title = "Coverage on YAM Reference") -> yam.coverage.plot
+cov_plot(all.cov.reorder, title = "") -> coverage.plot.all
 
-ggsave(filename = "results/plots/VIC_coverage_plot.jpg", plot = vic.coverage.plot, device = "jpeg", width = 10)
-ggsave(filename = "results/plots/YAM_coverage_plot.jpg", plot = yam.coverage.plot, device = "jpeg", width = 10)
-ggsave(filename = "results/plots/VIC_coverage_plot.pdf", plot = vic.coverage.plot, device = "pdf", width = 10)
-ggsave(filename = "results/plots/YAM_coverage_plot.pdf", plot = yam.coverage.plot, device = "pdf", width = 10)
+ggsave(filename = "results/plots/coverage_plot.pdf", plot = all.cov.reorder, device = "pdf", width = 6, height = 4) # modify size
 
-cov_plot(vic.cov, title = "") -> vic.coverage.plot.square
-ggsave(filename = "results/plots/VIC_coverage_plot_square.pdf", plot = vic.coverage.plot.square, device = "pdf", width = 10, height = 10)
+#cov_plot(vic.cov, title = "Coverage on VIC Reference") -> vic.coverage.plot
+#cov_plot(yam.cov, title = "Coverage on YAM Reference") -> yam.coverage.plot
+
+#ggsave(filename = "results/plots/VIC_coverage_plot.jpg", plot = vic.coverage.plot, device = "jpeg", width = 10)
+#ggsave(filename = "results/plots/YAM_coverage_plot.jpg", plot = yam.coverage.plot, device = "jpeg", width = 10)
+#ggsave(filename = "results/plots/VIC_coverage_plot.pdf", plot = vic.coverage.plot, device = "pdf", width = 10)
+#ggsave(filename = "results/plots/YAM_coverage_plot.pdf", plot = yam.coverage.plot, device = "pdf", width = 10)
+
+#cov_plot(vic.cov, title = "") -> vic.coverage.plot.square
+#ggsave(filename = "results/plots/VIC_coverage_plot_square.pdf", plot = vic.coverage.plot.square, device = "pdf", width = 10, height = 10)

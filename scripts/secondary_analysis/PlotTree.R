@@ -5,37 +5,31 @@
 # =========== Load and import ==================
 
 library(tidyverse)
-library(wesanderson)
 library(ggtree)
 
 meta_long <- read_csv("data/metadata/flu_b_2010_2017_v4LONG_withSeqInfo_gc.csv")
-tree <- read.tree("data/processed/RAxML_bestTree.IBV_VIC_aln_tree.fa")
-tree <- read.tree("data/processed/RAxML_bestTree.IBV_YAM_aln_tree.fa")
+tree.vic <- read.tree("data/processed/RAxML_bestTree.IBV_VIC_aln_tree.fa")
+tree.yam <- read.tree("data/processed/RAxML_bestTree.IBV_YAM_aln_tree.fa")
 
-# ======================== Some metadata wrangling ==========================
+# ======================== Modify tip labels ==========================
 
 meta_long <- mutate(meta_long, tip_label = paste0(ENROLLID, "_", HOUSE_ID, "_", season, "_", pcr_result))
 meta_long <- select(meta_long, tip_label, everything())
 
-# Change tip names in tree
 for(r in 1:nrow(meta_long))
 {
   row <- meta_long[r,]
   sample_num <- row$SeqSampleNumber1
   new_tip <- row$tip_label
-  tree$tip.label[which(tree$tip.label == sample_num)] <- new_tip
+  tree.vic$tip.label[which(tree.vic$tip.label == sample_num)] <- new_tip
+  tree.yam$tip.label[which(tree.yam$tip.label == sample_num)] <- new_tip
 }
 
-# ==================== ggtree ==========================
+# ==================== Plot with ggtree ==========================
 
-raxml_tree <- ggtree(tree) + geom_treescale()
-#raxml_tree <- raxml_tree %<+% meta_long + geom_tiplab(aes(color = factor(pairs_house_id)), size = 3) + scale_color_manual(values = palette)
-raxml_tree <- raxml_tree %<+% meta_long + geom_tiplab(aes(color = factor(season)), size = 0.5)
-raxml_tree
+tree.vic.plot <- ggtree(tree.vic) + geom_treescale()
+tree.vic.plot <- tree.vic.plot %<+% meta_long + geom_tiplab(aes(color = factor(season)), size = 0.5) # Can adjust size for refining in Illustrator
 
-raxml_tree <- raxml_tree + theme(legend.position = "bottom", legend.text = element_text(size = 11)) + labs(color = "Household ID")
-raxml_tree <- raxml_tree + guides(colour = guide_legend(override.aes = list(size = 7, shape = 16, alpha = 1)))
-raxml_tree
+tree.yam.plot <- ggtree(tree.yam) + geom_treescale()
+tree.yam.plot <- tree.yam.plot %<+% meta_long + geom_tiplab(aes(color = factor(season)), size = 0.5)
 
-#ggsave(plot = raxml_tree, filename = "results/plots/Tree_RAxML_BySeason.jpg", device = "jpeg", width = 10)
-ggsave(plot = raxml_tree, filename = "results/plots/Tree_RAxML_BySeason.pdf", device = "pdf", width = 12)

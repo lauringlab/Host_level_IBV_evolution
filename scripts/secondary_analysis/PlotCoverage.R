@@ -85,15 +85,22 @@ cov_plot <- function(cov.df, title)
   return(cov.plot)
 }
 
-cov_plot(vic.cov, title = "Coverage on VIC Reference") -> vic.coverage.plot
-cov_plot(yam.cov, title = "Coverage on YAM Reference") -> yam.coverage.plot
+# ======================== Plot ===================
 
-#ggsave(filename = "results/plots/VIC_coverage_plot.jpg", plot = vic.coverage.plot, device = "jpeg", width = 10)
-#ggsave(filename = "results/plots/YAM_coverage_plot.jpg", plot = yam.coverage.plot, device = "jpeg", width = 10)
-#ggsave(filename = "results/plots/VIC_coverage_plot.pdf", plot = vic.coverage.plot, device = "pdf", width = 10)
-#ggsave(filename = "results/plots/YAM_coverage_plot.pdf", plot = yam.coverage.plot, device = "pdf", width = 10)
+# Combine and reorder so that PB2 is first (PB1 was first in the reference file)
+all.cov <- rbind(vic.cov, yam.cov)
+pb2.cov <- filter(all.cov, chr == "PB2")
+pb2.pos.max <- max(pb2.cov$chr.pos)
+pb1.cov <- filter(all.cov, chr == "PB1")
+pb1.concat.max <- max(pb1.cov$concat.pos)
+pb2.cov <- mutate(pb2.cov, concat.pos = concat.pos - pb1.concat.max)
+pb1.cov <- mutate(pb1.cov, concat.pos = concat.pos + pb2.pos.max)
+all.cov.rest <- filter(all.cov, chr != "PB2" & chr != "PB1")
+all.cov.reorder <- rbind(pb2.cov, pb1.cov, all.cov.rest)
 
-cov_plot(vic.cov, title = "") -> vic.coverage.plot.square
-ggsave(filename = "results/plots/VIC_coverage_plot_square.pdf", plot = vic.coverage.plot.square, device = "pdf", width = 10, height = 10)
-cov_plot(yam.cov, title = "") -> yam.coverage.plot.square
-ggsave(filename = "results/plots/YAM_coverage_plot_square.pdf", plot = yam.coverage.plot.square, device = "pdf", width = 10, height = 10)
+cov_plot(all.cov.reorder, title = "") -> coverage.plot.all
+
+# ========================= Figure 1B ==============
+
+ggsave(filename = "results/plots/coverage_plot.pdf", plot = all.cov.reorder, device = "pdf", width = 6, height = 4)
+
