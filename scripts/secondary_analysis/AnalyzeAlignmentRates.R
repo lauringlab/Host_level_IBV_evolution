@@ -24,6 +24,7 @@ filenames_YAM <- data.frame("filename" = c(filenames_2445_YAM, filenames_2446_YA
 filenames_VIC %>% separate(filename, c("directory1", "directory2", "directory3", "directory4", "run", "lineage", "fourth"), sep = "/") %>% separate(fourth, c("seq_id", "filetype"), sep = "\\.") %>% mutate(filename = paste0(directory1, "/", directory2, "/", directory3, "/", directory4, "/", run, "/", lineage, "/", seq_id, ".", "log")) -> filenames_VIC
 filenames_YAM %>% separate(filename, c("directory1", "directory2", "directory3", "directory4", "run", "lineage", "fourth"), sep = "/") %>% separate(fourth, c("seq_id", "filetype"), sep = "\\.") %>% mutate(filename = paste0(directory1, "/", directory2, "/", directory3, "/", directory4, "/", run, "/", lineage, "/", seq_id, ".", "log")) -> filenames_YAM
 
+# Need to get the right alignment file for each lineage; all samples were aligned to both lineage references here
 SeqIDs_VIC <- as.character(filter(metadata, final_result == "B_VIC")$SampleNumber)
 SeqIDs_YAM <- as.character(filter(metadata, final_result == "B_YAM")$SampleNumber)
 filenames_VIC <- filter(filenames_VIC, seq_id %in% SeqIDs_VIC)
@@ -72,6 +73,8 @@ align.rate.plot <- ggplot(meta_snv_with_rate_newref, aes(x = overall_align_rate,
   xlab("Alignment rate to original influenza reference") +
   ylab("Alignment rate to new season-matched influenza reference") +
   geom_abline(intercept = 0, slope = 1,linetype = 2, size = 0.5, alpha = 0.5) +
+  xlim(c(0, 100)) + 
+  ylim(c(0, 100)) +
   theme_bw() # PDF, 6 by 5
 
 write.csv(meta_snv_with_rate_newref, "data/processed/meta_snv_withAlignRates.csv")
