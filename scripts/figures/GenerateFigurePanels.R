@@ -44,6 +44,8 @@ titer.plot <- ggplot(meta, aes(x = as.factor(DPSO), y = genome_copy_per_ul)) +
   xlab("Days Post Symptom Onset") + 
   theme_bw()
 
+ggsave(filename = "results/figures/Figure_1A.pdf", plot = titer.plot, device = "pdf", width = 5, height = 4)
+
 # Note: Figure 1B can be found in `PlotCoverage.R`.
   
 # ==================== Figure 2 ===================
@@ -56,12 +58,16 @@ isnv_by_day.plot <- ggplot(meta_snv, aes(x = as.factor(DPSO), y = iSNV)) +
   theme_bw() + 
   ylab("iSNV Per Sample") # save as PDF, 5 by 4
 
+ggsave(filename = "results/figures/Figure_2A.pdf", plot = isnv_by_day.plot, device = "pdf", width = 5, height = 4)
+
 # Figure 2B
 snv_by_copynum <- ggplot(meta_snv, aes(x = log(genome_copy_per_ul, 10), y = iSNV)) + 
   geom_point(shape = 19, size = 1.5) + 
   ylab("iSNV Per Sample") + 
   theme_bw() +
   xlab(expression(paste("Log (base 10) of genomes/", mu, L))) # save as PDF, 5 by 4
+
+ggsave(filename = "results/figures/Figure_2B.pdf", plot = snv_by_copynum, device = "pdf", width = 5, height = 4)
 
 # Figure 2C
 isnv_not_collapsed <- filter(qual_not_coll, freq.var < 0.98)
@@ -83,6 +89,8 @@ replicate_concordance_no_mixed <- ggplot(data = merged_nomixed, aes(x = freq.var
   theme_bw() + 
   theme(legend.position = "")
 
+ggsave(filename = "results/figures/Figure_2C.pdf", plot = replicate_concordance_no_mixed, device = "pdf", width = 4, height = 4)
+
 # ==================== Figure 3 ===================
 
 palette = wesanderson::wes_palette("FantasticFox1")
@@ -100,6 +108,8 @@ freq.by.pos <- ggplot(isnv_minority_nomixed_concatpos, aes(x = concat_pos, y = f
   theme(legend.position = "none", panel.grid.minor = element_blank()) +
   scale_x_continuous(labels = positions_YAM$Segment, breaks = positions_YAM$AddLength) # save as PDF, 10 by 4.
 
+ggsave(filename = "results/figures/Figure_3.pdf", plot = freq.by.pos, device = "pdf", width = 10, height = 4)
+
 
 # ==================== Figure 4 ===================
 
@@ -112,6 +122,8 @@ isnv_by_vaccination <- ggplot(meta_snv, aes(y = iSNV, x = as.factor(vaccination_
   ylab("iSNV Per Sample") +
   theme(legend.position = "") # PDF, 5 by 4
 
+ggsave(filename = "results/figures/Figure_4A.pdf", plot = isnv_by_vaccination, device = "pdf", width = 5, height = 4)
+
 # Figure 4B
 Vic_Yam_plot <- ggplot(meta_snv, aes(y = iSNV, x = as.factor(pcr_result))) +
   geom_dotplot(stackdir = "center", binaxis = 'y', binwidth = 1, dotsize = 0.3) +
@@ -119,6 +131,8 @@ Vic_Yam_plot <- ggplot(meta_snv, aes(y = iSNV, x = as.factor(pcr_result))) +
   ylab("iSNV Per Sample") + 
   theme_bw() + 
   theme(legend.position = "") # PDF, 5 by 4
+
+ggsave(filename = "results/figures/Figure_4B.pdf", plot = Vic_Yam_plot, device = "pdf", width = 5, height = 4)
 
 # Figure 4C
 IBV_snv <- select(meta_snv, iSNV)
@@ -135,6 +149,8 @@ cfIAV.dotplot <- ggplot(cfIAV_data, aes(y = iSNV, x = as.factor(type), fill = ty
   ylab("iSNV Per Sample") + 
   theme_bw() + 
   theme(legend.position = "")
+
+ggsave(filename = "results/figures/Figure_4C.pdf", plot = cfIAV.dotplot, device = "pdf", width = 5, height = 4)
 
 # Figure 4D
 new_calls <- rbind(yam1415, vic1516, yam1617)
@@ -169,6 +185,8 @@ snv.by.ref.plot <- ggplot(compare_df, aes(y = iSNV, x = as.factor(type))) +
   theme_bw() + 
   theme(legend.position = "") # save as PDF, 6 by 5
 
+ggsave(filename = "results/figures/Figure_4D.pdf", plot = snv.by.ref.plot, device = "pdf", width = 6, height = 5)
+
 # ==================== Figure 5 ===================
 
 # Figure 5A and 5B
@@ -187,10 +205,13 @@ for(r in 1:nrow(meta_long))
 }
 
 tree.vic.plot <- ggtree(tree.vic) + geom_treescale()
-tree.vic.plot <- tree.vic.plot %<+% meta_long + geom_tiplab(aes(color = factor(season)), size = 0.5) # Can adjust size for refining in Illustrator
+tree.vic.plot <- tree.vic.plot %<+% meta_long + geom_tiplab(aes(color = factor(season)), size = 1) # Can adjust size for refining in Illustrator
 
 tree.yam.plot <- ggtree(tree.yam) + geom_treescale()
-tree.yam.plot <- tree.yam.plot %<+% meta_long + geom_tiplab(aes(color = factor(season)), size = 0.5)
+tree.yam.plot <- tree.yam.plot %<+% meta_long + geom_tiplab(aes(color = factor(season)), size = 1)
+
+ggsave(filename = "results/figures/Figure_5A.pdf", plot = tree.vic.plot, device = "pdf", width = 10, height = 10)
+ggsave(filename = "results/figures/Figure_5B.pdf", plot = tree.yam.plot, device = "pdf", width = 10, height = 10)
 
 # Figure 5C
 
@@ -214,6 +235,8 @@ L1norm_plot <- ggplot(L1norm_plot_data, aes(x = L1_norm, fill = as.factor((valid
   theme_classic() +
   theme(text = element_text(size = 28), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20)) # save as PDF, 15 by 10
 
+ggsave(filename = "results/figures/Figure_5C.pdf", plot = L1norm_plot, device = "pdf", width = 15, height = 10)
+
 
 # ==================== Figure 6 ===================
 
@@ -222,4 +245,6 @@ snv.betweenhost.plot <- ggplot(trans_freq, aes(x = freq1, y = freq2)) +
   xlab("Frequency in donor") + 
   ylab("Frequency in recipient") + 
   theme_classic() # save as PDF, 5 by 4
+
+ggsave(filename = "results/figures/Figure_6.pdf", plot = snv.betweenhost.plot, device = "pdf", width = 5, height = 4)
   
