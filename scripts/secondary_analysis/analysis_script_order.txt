@@ -7,17 +7,15 @@ Intra-Host Analysis:
 	CombineVariantCSVs.R
 	WranglingMetadata.R
 	ProcessSNV.R
-	GetAntigenicPositions.py # not part of final repo?
 	SecondaryAnalysisExploration.R
 
 Transmission Pair Analysis:
 
 	ValidateTransmissionPairs.R
 	AnalyzeTransmissionPairs.R
-	EstimateBottleneck.R # not likely part of final repo
 
 Phylogenetic Trees:
 
-	RunningFastTree.ipynb
+	MakeConsensusAlignments.ipynb
 	raxml.pbs
 	PlotTree.R
