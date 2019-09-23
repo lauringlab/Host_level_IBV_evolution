@@ -9,6 +9,7 @@
 library(tidyverse)
 library(wesanderson)
 library(ggbeeswarm)
+library(ggtree)
 palette <- wesanderson::wes_palette("FantasticFox1")
 
 meta <- read_csv("data/metadata/flu_b_2010_2017_v4LONG_withSeqInfo_gc.csv")
@@ -24,7 +25,9 @@ tree.yam <- read.tree("data/processed/RAxML_bestTree.IBV_YAM_aln_tree.fa")
 possible_pairs.dist <- read.csv("data/processed/possible.pairs.dist.csv")
 trans_freq <- read.csv("data/processed/trans_freq.csv")
 meta_snv <- read.csv("data/processed/meta_snv.csv")
-meta_snv_with_rate_newref <- read.csv("data/processed/meta_snv_withAlignRates.csv")
+yam1415 <- read.csv("data/processed/yam1415.minor.quality.snv.csv")
+vic1516 <- read.csv("data/processed/vic1516.minor.quality.snv.csv")
+yam1617 <- read.csv("data/processed/yam1617.minor.quality.snv.csv")
 
 isnv <- filter(quality_var, freq.var < 0.98)
 isnv_nomixed <- filter(isnv, !(ENROLLID %in% c("50425")))
@@ -133,10 +136,44 @@ cfIAV.dotplot <- ggplot(cfIAV_data, aes(y = iSNV, x = as.factor(type), fill = ty
   theme_bw() + 
   theme(legend.position = "")
 
+# Figure 4D
+new_calls <- rbind(yam1415, vic1516, yam1617)
+
+read.csv("data/processed/qual.snv.csv") %>% 
+  filter(freq.var < 0.5) %>%
+  filter((pcr_result == "B/YAM" & season == "2014-2015") | (pcr_result == "B/VIC" & season == "2015-2016") | (pcr_result == "B/YAM" & season == "2016-2017")) -> old_calls
+
+read_csv("data/metadata/flu_b_2010_2017_v4LONG_withSeqInfo_gc.csv") %>%
+  filter((pcr_result == "B/YAM" & season == "2014-2015") | (pcr_result == "B/VIC" & season == "2015-2016") | (pcr_result == "B/YAM" & season == "2016-2017")) %>%
+  filter(coverage_qualified == TRUE) -> meta
+
+old_calls %>% group_by(ALV_ID) %>% dplyr::summarize(iSNV = length(unique(mutation))) -> isnv_minority_count
+meta_snv <- merge(meta, isnv_minority_count, by = "ALV_ID", all.x = TRUE)
+meta_snv$iSNV[is.na(meta_snv$iSNV)] <- 0 # NA means there were no variants; change to 0
+
+new_calls %>% group_by(ALV_ID) %>% dplyr::summarize(iSNV_new = length(unique(mutation))) -> isnv_minority_count_new
+meta_snv <- merge(meta_snv, isnv_minority_count_new, by = "ALV_ID", all.x = TRUE)
+meta_snv$iSNV_new[is.na(meta_snv$iSNV_new)] <- 0 # NA means there were no variants; change to 0
+
+old_snv <- select(meta_snv, iSNV)
+old_snv <- mutate(old_snv, type = "Original reference")
+new_snv <- select(meta_snv, iSNV_new)
+new_snv <- mutate(new_snv, type = "Season-matched reference")
+new_snv <- rename(new_snv, iSNV = iSNV_new)
+compare_df <- rbind(old_snv, new_snv)
+
+snv.by.ref.plot <- ggplot(compare_df, aes(y = iSNV, x = as.factor(type))) +
+  geom_dotplot(stackdir = "center", binaxis = 'y', binwidth = 1, dotsize = 0.05) + 
+  xlab("") + 
+  ylab("iSNV Per Sample") + 
+  theme_bw() + 
+  theme(legend.position = "") # save as PDF, 6 by 5
+
 # ==================== Figure 5 ===================
 
 # Figure 5A and 5B
 
+meta_long <- read_csv("data/metadata/flu_b_2010_2017_v4LONG_withSeqInfo_gc.csv")
 meta_long <- mutate(meta_long, tip_label = paste0(ENROLLID, "_", HOUSE_ID, "_", season, "_", pcr_result))
 meta_long <- select(meta_long, tip_label, everything())
 

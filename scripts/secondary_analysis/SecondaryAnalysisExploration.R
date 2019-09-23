@@ -11,6 +11,7 @@ library(ggbeeswarm)
 palette <- wesanderson::wes_palette("FantasticFox1")
 
 meta <- read_csv("data/metadata/flu_b_2010_2017_v4LONG_withSeqInfo_gc.csv")
+meta_v5 <- read_csv("data/metadata/flu_b_2010_2017_v5LONG_withSeqInfo_gc.csv")
 meta_short <- read_csv("data/metadata/flu_b_2010_2017_v4.csv")
 metadata_by_seq <- read_csv("data/metadata/Metadata_By_Seq_withALVID.csv")
 quality_var <- read_csv("data/processed/qual.snv.csv")
@@ -150,11 +151,45 @@ isnv_by_vaccination <- ggplot(meta_snv, aes(y = iSNV, x = as.factor(vaccination_
   scale_x_discrete(labels = c("Not Vaccinated", "Vaccinated")) + xlab("") + theme_bw() + ylab("iSNV Per Sample") +
   theme(legend.position = "")
 
+novax <- filter(meta_snv, vaccination_status == 0 & iSNV < 5)$iSNV
+yesvax <- filter(meta_snv, vaccination_status == 1 & iSNV < 5)$iSNV
+t.test(novax, yesvax)
+wilcox.test(novax, yesvax)
+
 #ggsave(plot = isnv_by_vaccination, filename = "results/plots/SNVbyVaccinationStatus.jpg", device = "jpeg")
 #ggsave(plot = isnv_by_vaccination, filename = "results/plots/SNVbyVaccinationStatus.pdf", device = "pdf")
 
 isnv_by_vaccination <- isnv_by_vaccination + theme(text = element_text(size = 35), axis.text.x = element_text(size = 32), axis.text.y = element_text(size = 28), axis.title.x = element_text(margin = margin(t = 20)))
 ggsave(plot = isnv_by_vaccination, filename = "results/plots/SNVbyVaccinationStatus_square.pdf", device = "pdf", width = 10, height = 10)
+
+# =========== iSNV counts by vaccination status: account for mismatches in trivalent vaccine recipients ================
+
+meta_v5_snv <- filter(meta_v5, coverage_qualified == TRUE)
+meta_v5_snv <- merge(meta_v5_snv, isnv_minority_count, by="ALV_ID", all.x = TRUE)
+meta_v5_snv$iSNV[is.na(meta_v5_snv$iSNV)] <- 0 # NA means there were no variants; change to 0
+
+meta_v5_modified <- filter(meta_v5_snv, valence != 9 | vaccination_status == 0)
+meta_v5_modified_novax <- filter(meta_v5_modified, vaccination_status == 0)
+meta_v5_modified_novax <- mutate(meta_v5_modified_novax, vaccination_status_new = vaccination_status)
+meta_v5_modified_vax4 <- filter(meta_v5_modified, vaccination_status == 1 & valence == 4)
+meta_v5_modified_vax4 <- mutate(meta_v5_modified_vax4, vaccination_status_new = vaccination_status)
+meta_v5_modified_vax3 <- filter(meta_v5_modified, vaccination_status == 1 & valence == 3)
+meta_v5_modified_vax3 <- mutate(meta_v5_modified_vax3, vaccination_status_new = vaccination_status)
+meta_v5_modified_vax3 <- mutate(meta_v5_modified_vax3, vaccination_status_new = ifelse(season == "2011-2012" & pcr_result ==  "B/YAM", 0, vaccination_status_new))
+meta_v5_modified_vax3 <- mutate(meta_v5_modified_vax3, vaccination_status_new = ifelse(season == "2012-2013" & pcr_result ==  "B/VIC", 0, vaccination_status_new))
+meta_v5_modified_final <- rbind(meta_v5_modified_novax, meta_v5_modified_vax4, meta_v5_modified_vax3)
+
+isnv_by_vaccination <- ggplot(meta_v5_modified_final, aes(y = iSNV, x = as.factor(vaccination_status_new))) +
+  geom_dotplot(stackdir = "center", binaxis = 'y', binwidth = 1, dotsize = 0.25) +
+  #stat_summary(fun.data = "plot.median", geom = "errorbar", colour = "red", width = 0.95, size = 0.3) +
+  #scale_fill_manual(values = c(palette[5], palette[5])) + scale_color_manual(values = c(palette[5], palette[5])) +
+  scale_x_discrete(labels = c("Not Vaccinated", "Vaccinated")) + xlab("") + theme_bw() + ylab("iSNV Per Sample") +
+  theme(legend.position = "")
+
+novax <- filter(meta_v5_modified_final, vaccination_status_new == 0)$iSNV
+yesvax <- filter(meta_v5_modified_final, vaccination_status_new == 1)$iSNV
+t.test(novax, yesvax)
+wilcox.test(novax, yesvax)
 
 # =========== iSNV across genome segments ================
 
