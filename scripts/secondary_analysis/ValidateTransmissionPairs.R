@@ -6,9 +6,9 @@
 
 library(tidyverse)
 
-meta_long <- read_csv("data/metadata/flu_b_2010_2017_v4LONG_withSeqInfo_gc.csv")
+meta_long <- read_csv("data/metadata/flu_b_2010_2017_v4LONG_withSeqInfo_gc.csv") # Each row is a biological sample
 qual <- read_csv("data/processed/qual.snv.csv")
-meta_wide <- read_csv("data/metadata/flu_b_2010_2017_v4.csv")
+meta_wide <- read_csv("data/metadata/flu_b_2010_2017_v4.csv") # Each row is an individual
 
 # ================== Metadata wrangling ===================================
 
@@ -20,12 +20,12 @@ meta_wide <- mutate(meta_wide, clinic_onset = paste0(SPECID, "_", onset))
 
 meta_long %>% filter(coverage_qualified == TRUE) %>% mutate(ID_onset = paste0(ALV_ID, "_", onset)) -> meta_long_qualitySeq # all sequenced and have >1000x average coverage
 
-meta_wide <- mutate(meta_wide, haveQualityHomeSample = ifelse(home_onset %in% meta_long_qualitySeq$ID_onset, TRUE, FALSE)) # Why aren't these finding hits?
+meta_wide <- mutate(meta_wide, haveQualityHomeSample = ifelse(home_onset %in% meta_long_qualitySeq$ID_onset, TRUE, FALSE))
 meta_wide <- mutate(meta_wide, haveQualityClinicSample = ifelse(clinic_onset %in% meta_long_qualitySeq$ID_onset, TRUE, FALSE)) 
 
 meta_wide_seqd <- filter(meta_wide, haveQualityHomeSample == TRUE | haveQualityClinicSample == TRUE) # Have a home and/or clinic sample with quality sequence
 meta_wide_seqd <- mutate(meta_wide_seqd, ID_onset = paste0(ENROLLID, "_", onset)) # these are individual infections for which we have some sequence data
-#write_csv(meta_wide_seqd, "data/metadata/metadata_wide_quality_sequence.csv")
+#write_csv(meta_wide_seqd, "data/metadata/metadata_wide_quality_sequence.csv") # Write to intermediate file for later use.
 
 # ================== Functions for L1-norm =========================
 
@@ -250,18 +250,86 @@ get_tp <- function(meta_one, interval)
   return(result)
 }
 
+# ====================== Function to select a single sample per individual ==================
+
+# Method used in IAV paper to select one sample per individual to run the L1-norm comparison. It yields the same results as the method I use below (i.e. take home sample if available).
+
+only_one <- function(meta_df)
+{
+  
+  only_one_helper<-function(x)
+  {
+    # if there is only one sample then we are done
+    if(nrow(x)==1)
+    {
+      return(x)
+    } else if(nrow(x) == 2)
+    {
+      # There are two samples here with this person and pcr result
+      # pick the ones that we sequenced
+      pick <- which(x$sequenced == TRUE)
+      if(length(pick) == 1)
+      {
+        #if there is only one then we're done
+        return(x[pick, ])
+      }
+      else if(length(pick) == 0)
+      {
+        # we didn't sequence any of these
+        pick <- 1
+        return(x[pick, ]) # take the first one
+      }
+      else if(length(pick) == 2)
+      {
+        # we sequenced both
+        # See how many qualified for snv calling
+        pick <- which(x$coverage_qualified == TRUE)
+        # Either 0 or 2 did
+        if(length(pick) == 0 | length(pick) == 2)
+        {
+          # take the one with a higher titer.
+          pick <- which(x$genome_copy_per_ul == max(x$genome_copy_per_ul))
+        }
+        return(x[pick, ])
+      }
+    } else
+    {
+      stop("More than 2 samples for this person? That shouldn't happen!")
+    }
+  }
+  
+  out <- meta_df %>% dplyr::group_by(ENROLLID,pcr_result,season) %>%
+    dplyr::do(only_one_helper(.))
+  return(out)
+}
+
+meta_long <- read_csv("data/metadata/flu_b_2010_2017_v4LONG_withSeqInfo_gc.csv")
+meta_long <- mutate(meta_long, sequenced = TRUE)
+meta_long_one <- only_one(meta_long)
+
+meta_long_one %>%
+  group_by(season, pcr_result) %>%
+  do({expand.grid(.$ALV_ID, .$ALV_ID)}) %>%
+  ungroup() -> all_possible_pairs
 
 # ================== Get specimens to compare =========================
 
-# For each individual, we have all infections that have at least one quality sample. That's in meta_wide. All of these have SNV-quality data.
+# For each individual, we have all infections that have at least one quality sample. That's in meta_wide_seqd. All of these have SNV-quality data.
 # Take home sample, unless not available, then just take clinic sample.
 
-meta_wide <- read_csv("data/metadata/metadata_wide_quality_sequence.csv")
+meta_wide_seqd <- read_csv("data/metadata/metadata_wide_quality_sequence.csv")
 
-meta_wide <- mutate(meta_wide, sampleForDistanceAnalysis = ifelse(haveQualityHomeSample == TRUE, home_spec_accn, SPECID))
-meta_wide_unique <- filter(meta_wide, !(ENROLLID == "50003" & cluster == 0)) # 50003 is in here twice. Remove the one that's not in a cluster.
-meta_wide_unique <- mutate(meta_wide_unique, collect_forAnalysis = ifelse(haveQualityHomeSample == TRUE, home_spec_date, collect))
-meta_wide_unique <- mutate(meta_wide_unique, pcr_result = ifelse(str_detect(pcr_result, "Y") | pcr_result == "B", "B/YAM", "B/VIC"))
+meta_wide_seqd <- mutate(meta_wide_seqd, sampleForDistanceAnalysis = ifelse(haveQualityHomeSample == TRUE, home_spec_accn, SPECID))
+meta_wide_unique <- filter(meta_wide_seqd, !(ENROLLID == "50003" & cluster == 0)) # 50003 is in here twice. Infected twice in one season Remove the one that's not in a cluster (no household transmission).
+
+#meta_wide_unique <- mutate(meta_wide_unique, collect_forAnalysis = ifelse(haveQualityHomeSample == TRUE, home_spec_date, collect)) # For some reason, ifelse was changing the format of the date. It resulted in the same thing, but I changed the code here to be more clear.
+meta_wide_unique_home <- filter(meta_wide_unique, haveQualityHomeSample == TRUE)
+meta_wide_unique_clinic <- filter(meta_wide_unique, haveQualityHomeSample == FALSE)
+meta_wide_unique_home <- mutate(meta_wide_unique_home, collect_forAnalysis = home_spec_date)
+meta_wide_unique_clinic <- mutate(meta_wide_unique_clinic, collect_forAnalysis = collect)
+meta_wide_unique <- rbind(meta_wide_unique_home, meta_wide_unique_clinic)
+
+meta_wide_unique <- mutate(meta_wide_unique, pcr_result = ifelse(str_detect(pcr_result, "Y") | pcr_result == "B", "B/YAM", "B/VIC")) # Format lineage
 
 meta_wide_unique %>%
   group_by(season, pcr_result) %>%
@@ -283,13 +351,13 @@ all_possible_pairs <- subset(all_possible_pairs, time_onset >= 0) # only those w
 
 #write.csv(all_possible_pairs, file = "data/processed/all_possible_pairs.csv")
 
-# ================== Use JT's code for distance calculation =========================
+# ================== Distance calculation =========================
 
-### Remove the mixed infection ENROLLID, if they are present.
-mixed <- c("50425")
-all_possible_pairs_nomixed <- filter(all_possible_pairs, !(ENROLLID1 %in% mixed) & !(ENROLLID2 %in% mixed))
+### Remove the mixed infection by ENROLLID, if present.
+mixed_infection <- c("50425")
+all_possible_pairs_nomixed <- filter(all_possible_pairs, !(ENROLLID1 %in% mixed_infection) & !(ENROLLID2 %in% mixed_infection))
 
-possible_pairs.dist <- plyr::adply(all_possible_pairs_nomixed, 1, summarize, L1_norm = dist_tp(c(ALV_ID_1, ALV_ID_2), snv = qual))
+possible_pairs.dist <- plyr::adply(all_possible_pairs_nomixed, 1, summarize, L1_norm = dist_tp(c(ALV_ID_1, ALV_ID_2), snv = qual)) # Get the genetic distance between pairs! Takes the longest.
 
 ggplot(possible_pairs.dist, aes(L1_norm)) + geom_histogram(binwidth = 1) # a quick view.
 
@@ -299,13 +367,14 @@ ggplot(possible_pairs.dist, aes(L1_norm)) + geom_histogram(binwidth = 1) # a qui
 possible_pairs.dist <- mutate(possible_pairs.dist,
                             HOUSE_ID1 = meta_wide_unique$HOUSE_ID[match(x = ALV_ID_1, meta_wide_unique$sampleForDistanceAnalysis)],
                             HOUSE_ID2 = meta_wide_unique$HOUSE_ID[match(x = ALV_ID_2, meta_wide_unique$sampleForDistanceAnalysis)],
-                            Household = HOUSE_ID1==HOUSE_ID2) 
+                            Household = HOUSE_ID1==HOUSE_ID2) # Are these household pairs? True or False
 
 # Get putative transmission pairs
-all_pairs.tp <- get_tp(meta_wide_unique, interval = 7) # Within 7 days of each other
-all_pairs.tp$pair_id <- 1:nrow(all_pairs.tp)
-all_pairs.tp <- ungroup(all_pairs.tp)
-valid_pairs <- filter(all_pairs.tp, valid == TRUE) # Here we get 16
+linkage_interval <- 7
+all_pairs <- get_tp(meta_wide_unique, interval = linkage_interval) # Within 7 days of each other
+all_pairs$pair_id <- 1:nrow(all_pairs)
+all_pairs <- ungroup(all_pairs)
+valid_pairs <- filter(all_pairs, valid == TRUE) # Here we get 16; one includes the mixed infection
 valid_pairs <- mutate(valid_pairs, same_onset_day = ifelse(onset1 == onset2, TRUE, FALSE))
 possible_pairs.dist <- left_join(possible_pairs.dist, select(valid_pairs, season, pcr_result, ENROLLID1, ENROLLID2, valid))
 possible_pairs.dist$valid[is.na(possible_pairs.dist$valid)] <- FALSE
@@ -323,7 +392,7 @@ cutoff <- cutoffs$L1_norm[cutoffs$threshold == 0.05] # below 5th percentile
 
 possible_pairs.dist <- mutate(possible_pairs.dist, quality_distance = L1_norm <= cutoff)
 
-valid_pairs <- left_join(valid_pairs, select(possible_pairs.dist, ENROLLID1, ENROLLID2, quality_distance, L1_norm)) # This is the same as putative_pairs, just rearranged.
+valid_pairs <- left_join(valid_pairs, select(possible_pairs.dist, ENROLLID1, ENROLLID2, quality_distance, L1_norm))
 valid_pairs <- mutate(valid_pairs, ALV_ID_1 = meta_wide_unique$sampleForDistanceAnalysis[match(x = ENROLLID1, meta_wide_unique$ENROLLID)])
 valid_pairs <- mutate(valid_pairs, ALV_ID_2 = meta_wide_unique$sampleForDistanceAnalysis[match(x = ENROLLID2, meta_wide_unique$ENROLLID)])
 
@@ -338,9 +407,9 @@ L1norm_plot <- ggplot(L1norm_plot_data, aes(x = L1_norm, fill = as.factor((valid
   xlab("L1 Norm") + ylab("Normalized Count") +
   theme(legend.position = c(0.5, 0.5)) +
   geom_segment(aes(x = cutoff, xend = cutoff, y = 0, yend = 1), linetype = 2, color = palette[5], size = 0.4) + theme_classic() +
-  theme(text = element_text(size = 28), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20))
+  theme(text = element_text(size = 28), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20)) # save as PDF, 15 by 10
 
-ggsave(plot = L1norm_plot, filename = "results/plots/L1norm_square.pdf", device = "pdf", width = 15, height = 10)
+#ggsave(plot = L1norm_plot, filename = "results/plots/L1norm_square.pdf", device = "pdf", width = 15, height = 10)
 
 # ============================== Number of SNVs per transmission pair sample ===================================
 
