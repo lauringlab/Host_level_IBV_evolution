@@ -21,15 +21,11 @@ This repository holds code for the data analysis and relies heavily on our other
     |  |- figures/     #  raw panels for figures
     
   --------
-# Dependencies    
-
 
 The analysis requires the helper repository, variant_pipeline for the primary analysis of variant identification. For the secondary analysis involved in the paper, the R and python scripts are available in this repository. 
-
-# Reproducing the analysis
 
 Raw sequencing data is available through the NCBI SRA with BioProject PRJNA561158.
 
 After downloading data into an appropriate directory, the primary analysis can be replicated with the commands in IBV_setup.sh.
 
-After downloading the variants, coverage data, and consensus sequences, the secondary analysis can be replicated with the scripts listed in analysis_script_order.txt.
+After downloading the variants (all.variants.csv), coverage data (all.coverage.csv), and consensus sequences (parsed_fa), the secondary analysis can be replicated with the scripts listed in analysis_script_order.txt. Due to file size limitations, the raw all.variants.csv file is not included in this repository.
