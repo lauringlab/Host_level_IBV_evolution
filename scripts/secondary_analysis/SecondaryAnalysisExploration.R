@@ -101,6 +101,32 @@ ggsave(plot = cfIAV.dotplot, filename = "results/plots/SNVperSample_cfIAV_dotplo
 cfIAV.dotplot <- cfIAV.dotplot + theme(text = element_text(size = 35), axis.text.x = element_text(size = 32), axis.text.y = element_text(size = 28))
 ggsave(plot = cfIAV.dotplot, filename = "results/plots/SNVperSample_cfIAV_dotplot_square.pdf", device = "pdf", width = 4, height = 4)
 
+# Remove mixed infections and test
+meta_snv_nomixed <- filter(meta_snv, ENROLLID != "50425")
+IBV_snv <- select(meta_snv_nomixed, iSNV)
+IBV_snv <- mutate(IBV_snv, type = "Influenza B")
+IAV_snv_qual_meta_nomixed <- filter(IAV_snv_qual_meta, !SPECID %in% c("HS1530", "M54062" ,"MH8125", "MH8137" ,"MH8156" ,"MH8390"))
+IAV_snv <- select(IAV_snv_qual_meta_nomixed, iSNV)
+IAV_snv <- mutate(IAV_snv, type = "Influenza A")
+cfIAV_data <- rbind(IBV_snv, IAV_snv)
+
+t.test(IBV_snv$iSNV, IAV_snv$iSNV)
+wilcox.test(IBV_snv$iSNV, IAV_snv$iSNV)
+
+# summary stats
+
+median(IBV_snv_2$iSNV)
+quantile(IBV_snv_2$iSNV)
+nrow(filter(IBV_snv_2, iSNV == 0)) / nrow(IBV_snv_2)
+
+median(IAV_snv_2$iSNV)
+quantile(IAV_snv_2$iSNV)
+nrow(filter(IAV_snv_2, iSNV == 0)) / nrow(IAV_snv_2)
+
+# Other stats
+snv.by.dpso.anova <- aov(iSNV ~ DPSO, data = meta_snv_nomixed)
+
+
 # Yam vs. Vic
 
 Vic_Yam_plot <- ggplot(meta_snv, aes(y = iSNV, x = as.factor(pcr_result))) +
